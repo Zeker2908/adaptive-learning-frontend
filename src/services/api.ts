@@ -2,7 +2,7 @@
 import {useAuthStore} from '@/store/authStore';
 import type {ApiError, AuthenticationResponse} from "@/types/auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // Флаг для предотвращения множественных refresh запросов
 let isRefreshing = false;

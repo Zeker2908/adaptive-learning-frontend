@@ -1,5 +1,4 @@
 // hooks/useAuth.ts
-import {useCallback} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useAuthStore} from '@/store/authStore';
 import {authService} from '@/services/authService';
@@ -14,32 +13,33 @@ export function useAuth() {
         login: storeLogin,
         confirmEmail: storeConfirmEmail,
         logout: storeLogout,
-        logoutAll: storeLogoutAll
+        logoutAll: storeLogoutAll,
     } = useAuthStore();
 
-    const login = useCallback(async (credentials: LoginRequest) => {
+    const login = async (credentials: LoginRequest) => {
         await storeLogin(credentials);
         toast.success('Successfully signed in!', {
             duration: 3000,
-            position: 'top-right'
+            position: 'top-right',
         });
         navigate('/dashboard', {replace: true});
-    }, [storeLogin, navigate]);
+    };
 
-    const register = useCallback(async (credentials: RegisterRequest) => {
+    const register = async (credentials: RegisterRequest) => {
         await authService.register(credentials);
         toast.success('Registration successful! Please check your email to confirm your account.', {
             duration: 6000,
-            position: 'top-right'
+            position: 'top-right',
         });
-    }, []);
+        navigate('/login', {replace: true});
+    };
 
-    const confirmEmail = useCallback(async (token: ConfirmationEmailRequest) => {
+    const confirmEmail = async (token: ConfirmationEmailRequest) => {
         try {
             await storeConfirmEmail(token);
             toast.success('Email confirmed successfully!', {
                 duration: 3000,
-                position: 'top-right'
+                position: 'top-right',
             });
             navigate('/dashboard', {replace: true});
         } catch (error) {
@@ -48,14 +48,14 @@ export function useAuth() {
             }, 3000);
             throw error;
         }
-    }, [storeConfirmEmail, navigate]);
+    };
 
-    const logout = useCallback(async () => {
+    const logout = async () => {
         try {
             storeLogout();
             toast.success('Successfully logged out', {
                 duration: 3000,
-                position: 'top-right'
+                position: 'top-right',
             });
             navigate('/login', {replace: true});
         } catch (error) {
@@ -63,14 +63,14 @@ export function useAuth() {
             navigate('/login', {replace: true});
             throw error;
         }
-    }, [storeLogout, navigate]);
+    };
 
-    const logoutAll = useCallback(async () => {
+    const logoutAll = async () => {
         try {
             storeLogoutAll();
             toast.success('Logged out from all devices', {
                 duration: 3000,
-                position: 'top-right'
+                position: 'top-right',
             });
             navigate('/login', {replace: true});
         } catch (error) {
@@ -78,7 +78,7 @@ export function useAuth() {
             navigate('/login', {replace: true});
             throw error;
         }
-    }, [storeLogoutAll, navigate]);
+    };
 
     return {
         token,
@@ -87,6 +87,6 @@ export function useAuth() {
         register,
         confirmEmail,
         logout,
-        logoutAll
+        logoutAll,
     };
 }

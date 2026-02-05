@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {userService} from "@/services/userService.ts";
 import {useAuth} from "@/hooks/useAuth.ts";
 import {useError} from "@/hooks/useError.ts";
 
@@ -22,10 +23,8 @@ export default function DashboardPage() {
             }
 
             try {
-                // Здесь можно сделать запрос к /api/user/me для получения данных пользователя
-                // Пока просто декодируем JWT для получения email (опционально)
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                setUserData({email: payload.sub});
+                const user = await userService.currentUser();
+                setUserData({email: user.email});
             } finally {
                 setIsLoading(false);
             }
