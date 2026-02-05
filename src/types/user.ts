@@ -1,9 +1,9 @@
 export interface UserResponse{
     id: string;
     email: string;
-    firstname: string;
-    lastname: string;
+    firstName: string;
+    lastName: string;
     role: string;
-    isLocalAuthUser: boolean;
+    isLocalUser: boolean;
     isOAuthUser: boolean;
 }

@@ -6,15 +6,16 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/compo
 import {userService} from "@/services/userService.ts";
 import {useAuth} from "@/hooks/useAuth.ts";
 import {useError} from "@/hooks/useError.ts";
+import type {UserResponse} from '@/types/user';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
     const {token, isAuthenticated, logout} = useAuth();
     const [isLoading, setIsLoading] = useState(true);
-    const [userData, setUserData] = useState<{ email?: string } | null>(null);
+    const [userData, setUserData] = useState<UserResponse | null>(null);
     const {handleError} = useError();
 
-    // Проверка токена и получение данных пользователя (опционально)
+    // Проверка токена и получение данных пользователя
     useEffect(() => {
         const validateToken = async () => {
             if (!isAuthenticated || !token) {
@@ -24,7 +25,7 @@ export default function DashboardPage() {
 
             try {
                 const user = await userService.currentUser();
-                setUserData({email: user.email});
+                setUserData(user);
             } finally {
                 setIsLoading(false);
             }
@@ -41,7 +42,6 @@ export default function DashboardPage() {
         }
     };
 
-
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -54,27 +54,40 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-600">Welcome to your account</p>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        Welcome, {userData?.firstName}!
+                    </h1>
+                    <p className="text-gray-600">Manage your account and track your progress</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* User Info Card */}
                     <Card className="col-span-1 md:col-span-2">
                         <CardHeader>
-                            <CardTitle>Your Account</CardTitle>
-                            <CardDescription>Account information and settings</CardDescription>
+                            <CardTitle>Personal Information</CardTitle>
+                            <CardDescription>Your account details</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {userData?.email && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="font-medium">{userData.email}</p>
+                                    <p className="text-sm text-gray-500">First Name</p>
+                                    <p className="font-medium">{userData?.firstName || '-'}</p>
                                 </div>
-                            )}
-                            <Button variant="outline" onClick={() => navigate('/profile')}>
-                                View Profile
-                            </Button>
+                                <div>
+                                    <p className="text-sm text-gray-500">Last Name</p>
+                                    <p className="font-medium">{userData?.lastName || '-'}</p>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <p className="text-sm text-gray-500">Email</p>
+                                    <p className="font-medium">{userData?.email || '-'}</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-4">
+                                <Button variant="outline" onClick={() => navigate('/profile')}>
+                                    Edit Profile
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -82,7 +95,7 @@ export default function DashboardPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Quick Actions</CardTitle>
-                            <CardDescription>Common actions</CardDescription>
+                            <CardDescription>Common account actions</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Button
@@ -90,14 +103,14 @@ export default function DashboardPage() {
                                 className="w-full"
                                 onClick={() => navigate('/settings')}
                             >
-                                Settings
+                                Account Settings
                             </Button>
                             <Button
                                 variant="destructive"
                                 className="w-full"
                                 onClick={handleLogout}
                             >
-                                Logout
+                                Sign Out
                             </Button>
                         </CardContent>
                     </Card>

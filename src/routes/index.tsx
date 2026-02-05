@@ -5,6 +5,8 @@ import RegisterPage from '@/pages/Register';
 import DashboardPage from '@/pages/Dashboard';
 import EmailConfirmationPage from '@/pages/EmailConfirmation';
 import {ProtectedRoute} from './ProtectedRoute';
+import NotFoundPage from "@/pages/NotFound.tsx";
+import OAuthCallbackPage from "@/pages/OAuthCallback.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -24,6 +26,10 @@ export const router = createBrowserRouter([
         element: <EmailConfirmationPage/>,
     },
     {
+        path: '/oauth/callback',
+        element: <OAuthCallbackPage/>,
+    },
+    {
         path: '/dashboard',
         element: (
             <ProtectedRoute>
@@ -31,4 +37,8 @@ export const router = createBrowserRouter([
             </ProtectedRoute>
         ),
     },
+    {
+        path: '*',
+        element: <NotFoundPage/>,
+    }
 ]);
