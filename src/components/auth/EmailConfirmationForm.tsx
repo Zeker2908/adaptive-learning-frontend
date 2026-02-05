@@ -1,0 +1,88 @@
+// components/auth/EmailConfirmationForm.tsx
+import {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {useAuth} from '@/hooks/useAuth';
+import {useError} from '@/hooks/useError';
+import {toast} from 'sonner';
+import type {ConfirmationEmailRequest} from '@/types/auth';
+
+interface EmailConfirmationFormProps {
+    token: string;
+}
+
+export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
+    const navigate = useNavigate();
+    const {confirmEmail: confirmAccount} = useAuth();
+    const {handleError} = useError();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isConfirmed, setIsConfirmed] = useState(false);
+
+    useEffect(() => {
+        const confirmEmail = async () => {
+            if (!token) {
+                toast.error('Invalid confirmation link');
+                navigate('/login', {replace: true});
+                return;
+            }
+
+            const confirmationRequest: ConfirmationEmailRequest = {token};
+
+            try {
+                await confirmAccount(confirmationRequest);
+                setIsConfirmed(true);
+            } catch (error) {
+                handleError(error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        confirmEmail();
+    }, [token, navigate, handleError, confirmAccount]);
+
+    return (
+        <Card className="w-full max-w-md">
+            <CardHeader className="space-y-1 text-center">
+                <CardTitle className="text-2xl font-bold">
+                    {isLoading ? 'Confirming Email...' : isConfirmed ? 'Success!' : 'Error'}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center space-y-4">
+                {isLoading && (
+                    <div className="flex flex-col items-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p className="text-muted-foreground">Verifying your email...</p>
+                    </div>
+                )}
+
+                {!isLoading && isConfirmed && (
+                    <div className="text-center space-y-2">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <p className="text-green-600">Your email has been confirmed!</p>
+                        <p className="text-muted-foreground text-sm">Redirecting to dashboard...</p>
+                    </div>
+                )}
+
+                {!isLoading && !isConfirmed && (
+                    <div className="text-center space-y-2">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <p className="text-red-600">Failed to confirm email</p>
+                        <p className="text-muted-foreground text-sm">Redirecting to login...</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}

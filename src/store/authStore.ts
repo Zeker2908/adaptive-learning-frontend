@@ -2,13 +2,13 @@
 import {create} from 'zustand';
 import {persist} from 'zustand/middleware';
 import {authService} from '@/services/authService';
-import type {LoginRequest, RegisterRequest} from '@/types/auth';
+import type {ConfirmationEmailRequest, LoginRequest} from '@/types/auth';
 
 interface AuthState {
     token: string | null;
     isAuthenticated: boolean;
     login: (credentials: LoginRequest) => Promise<void>;
-    register: (credentials: RegisterRequest) => Promise<void>;
+    confirmEmail: (data: ConfirmationEmailRequest) => Promise<void>;
     logout: () => void;
     logoutAll: () => void;
     setToken: (token: string) => void;
@@ -26,8 +26,9 @@ export const useAuthStore = create<AuthState>()(
                 set({token: response.token, isAuthenticated: true});
             },
 
-            register: async (credentials) => {
-                await authService.register(credentials);
+            confirmEmail: async (data) => {
+                const response = await authService.confirmEmail(data);
+                set({token: response.token, isAuthenticated: true});
             },
 
             logout: () => {

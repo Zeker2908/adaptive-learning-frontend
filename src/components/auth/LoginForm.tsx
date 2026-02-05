@@ -7,9 +7,9 @@ import * as z from 'zod';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
-import {useAuthStore} from '@/store/authStore';
 import {useError} from '@/hooks/useError';
 import type {LoginRequest} from '@/types/auth';
+import {useAuth} from "@/hooks/useAuth.ts";
 
 const loginSchema = z.object({
     email: z.string().email('Invalid email address'),
@@ -17,9 +17,9 @@ const loginSchema = z.object({
 });
 
 export function LoginForm() {
-    const navigate = useNavigate();
-    const {login, isAuthenticated} = useAuthStore();
-    const {handleError, error} = useError();
+    useNavigate();
+    const {login} = useAuth();
+    const {handleError} = useError();
     const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<LoginRequest>({
@@ -34,10 +34,6 @@ export function LoginForm() {
         try {
             setIsLoading(true);
             await login(data);
-
-            if (isAuthenticated) {
-                navigate('/dashboard', {replace: true});
-            }
         } catch (err) {
             handleError(err);
         } finally {
@@ -75,12 +71,6 @@ export function LoginForm() {
                         </FormItem>
                     )}
                 />
-
-                {error && (
-                    <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
-                        {error.message}
-                    </div>
-                )}
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? 'Signing in...' : 'Sign In'}

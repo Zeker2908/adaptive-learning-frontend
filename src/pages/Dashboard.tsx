@@ -1,22 +1,23 @@
 // pages/Dashboard.tsx
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuthStore } from '@/store/authStore';
-import { toast } from 'sonner';
+import {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Button} from '@/components/ui/button';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {useAuth} from "@/hooks/useAuth.ts";
+import {useError} from "@/hooks/useError.ts";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const { token, isAuthenticated, logout } = useAuthStore();
+    const {token, isAuthenticated, logout} = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [userData, setUserData] = useState<{ email?: string } | null>(null);
+    const {handleError} = useError();
 
     // Проверка токена и получение данных пользователя (опционально)
     useEffect(() => {
         const validateToken = async () => {
             if (!isAuthenticated || !token) {
-                navigate('/login', { replace: true });
+                navigate('/login', {replace: true});
                 return;
             }
 
@@ -24,7 +25,7 @@ export default function DashboardPage() {
                 // Здесь можно сделать запрос к /api/user/me для получения данных пользователя
                 // Пока просто декодируем JWT для получения email (опционально)
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                setUserData({ email: payload.sub });
+                setUserData({email: payload.sub});
             } finally {
                 setIsLoading(false);
             }
@@ -35,11 +36,9 @@ export default function DashboardPage() {
 
     const handleLogout = async () => {
         try {
-            logout();
-            toast.success('Successfully logged out');
-            navigate('/login', { replace: true });
+            await logout();
         } catch (error) {
-            toast.error(`Failed to logout: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            handleError(error);
         }
     };
 
@@ -53,7 +52,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+        <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>

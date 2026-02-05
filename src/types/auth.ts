@@ -4,8 +4,20 @@ export interface LoginRequest {
     password: string;
 }
 
+// Тип для формы регистрации (с подтверждением пароля)
+export interface RegisterFormValues {
+    email: string;
+    firstName: string;
+    lastName?: string;
+    password: string;
+    confirmPassword: string;
+}
+
+// Тип для API запроса (без подтверждения пароля)
 export interface RegisterRequest {
     email: string;
+    firstName: string;
+    lastName?: string;
     password: string;
 }
 
@@ -20,7 +32,7 @@ export interface AuthenticationResponse {
 export interface ApiError {
     timestamp: string;
     path: string;
-    status: string;
+    status: number;
     error: string;
     message: string;
     requestId: string;

@@ -17,18 +17,13 @@ export function useError() {
         };
 
         if (isApiError(err)) {
-            if (err.reason === 'TOKEN_EXPIRED') {
-                toast.error('Session expired. Please login again.');
-            } else {
-                toast.error(err.message || 'An error occurred');
-            }
+            toast.error(err.message || 'An error occurred');
             setError(err);
         } else {
             toast.error('An unexpected error occurred');
             setError(null);
         }
     }, []);
-
 
     const clearError = useCallback(() => {
         setError(null);
