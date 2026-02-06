@@ -35,13 +35,9 @@ export function ForgotPassword({onSuccess}: ForgotPasswordProps) {
         try {
             setIsLoading(true);
             await authService.forgotPassword(data);
-
             setIsSuccess(true);
             toast.success('Инструкции по восстановлению пароля отправлены на ваш email!');
-
-            if (onSuccess) {
-                onSuccess();
-            }
+            onSuccess?.();
         } catch (err) {
             handleError(err);
         } finally {

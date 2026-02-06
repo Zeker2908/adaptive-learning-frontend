@@ -18,7 +18,6 @@ const loginSchema = z.object({
 });
 
 export function LoginForm() {
-    useNavigate();
     const {login} = useAuthStore();
     const {handleError} = useError();
     const navigate = useNavigate();

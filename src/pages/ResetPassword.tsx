@@ -1,35 +1,23 @@
 // pages/ResetPassword.tsx
-import { useMemo } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResetPassword } from '@/components/auth/ResetPassword';
-import { Button } from '@/components/ui/button';
+import {Link, useNavigate, useSearchParams} from 'react-router-dom';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {ResetPassword} from '@/components/auth/ResetPassword';
+import {Button} from '@/components/ui/button';
 
 export default function ResetPasswordPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    // Извлекаем токен напрямую при рендере
-    const token = useMemo(() => {
-        const resetToken = searchParams.get('token');
-        if (!resetToken) {
-            navigate('/forgot-password', { replace: true });
-            return null;
-        }
-        return resetToken;
-    }, [searchParams, navigate]);
-
-    const handleSuccess = () => {
-        navigate('/login', { replace: true });
-    };
+    const token = searchParams.get('token');
 
     if (!token) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-        );
+        navigate('/forgot-password', {replace: true});
+        return null;
     }
+
+    const handleSuccess = () => {
+        navigate('/login', {replace: true});
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
@@ -41,8 +29,7 @@ export default function ResetPasswordPage() {
                     </p>
                 </CardHeader>
                 <CardContent>
-                    <ResetPassword token={token} onSuccess={handleSuccess} />
-
+                    <ResetPassword token={token} onSuccess={handleSuccess}/>
                     <div className="mt-4 text-center text-sm">
                         <Button asChild variant="link" className="p-0 h-auto font-normal">
                             <Link to="/login">Вернуться к входу</Link>

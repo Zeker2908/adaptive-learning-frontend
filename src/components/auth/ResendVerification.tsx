@@ -40,9 +40,7 @@ export function ResendVerification({onSuccess, initialEmail = ''}: ResendVerific
             setIsSuccess(true);
             toast.success('Письмо подтверждения отправлено повторно!');
 
-            if (onSuccess) {
-                onSuccess();
-            }
+            onSuccess?.();
         } catch (err) {
             handleError(err);
         } finally {

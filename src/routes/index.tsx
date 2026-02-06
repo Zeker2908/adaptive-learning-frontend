@@ -1,5 +1,5 @@
 // routes/index.tsx
-import {createBrowserRouter, Navigate} from 'react-router-dom';
+import {createBrowserRouter} from 'react-router-dom';
 import LoginPage from '@/pages/Login';
 import RegisterPage from '@/pages/Register';
 import DashboardPage from '@/pages/Dashboard';
@@ -11,9 +11,9 @@ import ResetPasswordPage from '@/pages/ResetPassword';
 import ForgotPasswordPage from '@/pages/ForgotPassword';
 import {ProtectedRoute} from './ProtectedRoute';
 import {PublicRoute} from './PublicRoute';
+import RootRedirect from "@/routes/RootRedirect.tsx";
 
 export const router = createBrowserRouter([
-    // Публичные маршруты (только для неавторизованных)
     {
         element: <PublicRoute/>,
         children: [
@@ -36,29 +36,20 @@ export const router = createBrowserRouter([
         ],
     },
 
-    // Приватные маршруты (только для авторизованных)
     {
         path: '/dashboard',
         element: (
             <ProtectedRoute>
-                <DashboardPage />
+                <DashboardPage/>
             </ProtectedRoute>
         ),
     },
 
     {
         path: '/',
-        loader: () => {
-            // Редирект с корня в зависимости от авторизации
-            const token = localStorage.getItem('auth-storage');
-            if (token) {
-                return {redirect: '/dashboard'};
-            }
-            return {redirect: '/login'};
-        },
-        // Но проще использовать компонент:
-        element: <Navigate to="/dashboard" replace/>,
+        element: <RootRedirect/>,
     },
+
     {
         path: '/email-confirmation',
         element: <EmailConfirmationPage/>,

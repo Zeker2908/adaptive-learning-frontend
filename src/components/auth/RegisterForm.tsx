@@ -5,12 +5,13 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form';
 import {useError} from '@/hooks/useError';
 import type {RegisterFormValues, RegisterRequest} from '@/types/auth';
-import {Link} from "react-router-dom";
-import {authService} from "@/services/authService.ts";
-import {toast} from "sonner";
+import {Link} from 'react-router-dom';
+import {authService} from '@/services/authService.ts';
+import {toast} from 'sonner';
+import {Eye, EyeOff} from 'lucide-react';
 
 const registerSchema = z.object({
     email: z.string().email('Некорректный email адрес'),
@@ -23,13 +24,15 @@ const registerSchema = z.object({
         .regex(/[0-9]/, 'Пароль должен содержать хотя бы одну цифру'),
     confirmPassword: z.string().min(1, 'Подтвердите пароль'),
 }).refine((data) => data.password === data.confirmPassword, {
-    message: "Пароли не совпадают",
-    path: ["confirmPassword"],
+    message: 'Пароли не совпадают',
+    path: ['confirmPassword'],
 });
 
 export function RegisterForm() {
     const {handleError} = useError();
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const form = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
@@ -46,7 +49,6 @@ export function RegisterForm() {
         try {
             setIsLoading(true);
 
-            // Преобразуем данные формы в формат API
             const registerData: RegisterRequest = {
                 email: data.email,
                 firstName: data.firstName,
@@ -55,10 +57,13 @@ export function RegisterForm() {
             };
 
             await authService.register(registerData);
-            toast.success('Регистрация прошла успешно! Пожалуйста, проверьте свою электронную почту для подтверждения учетной записи', {
-                duration: 6000,
-                position: 'top-right',
-            });
+            toast.success(
+                'Регистрация прошла успешно! Пожалуйста, проверьте свою электронную почту для подтверждения учетной записи',
+                {
+                    duration: 6000,
+                    position: 'top-right',
+                }
+            );
         } catch (err) {
             handleError(err);
         } finally {
@@ -120,7 +125,25 @@ export function RegisterForm() {
                         <FormItem>
                             <FormLabel>Пароль *</FormLabel>
                             <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
+                                <div className="relative">
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        {...field}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5"/>
+                                        ) : (
+                                            <Eye className="h-5 w-5"/>
+                                        )}
+                                    </button>
+                                </div>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
@@ -134,12 +157,33 @@ export function RegisterForm() {
                         <FormItem>
                             <FormLabel>Подтверждение пароля *</FormLabel>
                             <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
+                                <div className="relative">
+                                    <Input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        {...field}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        aria-label={
+                                            showConfirmPassword ? 'Скрыть подтверждение пароля' : 'Показать подтверждение пароля'
+                                        }
+                                    >
+                                        {showConfirmPassword ? (
+                                            <EyeOff className="h-5 w-5"/>
+                                        ) : (
+                                            <Eye className="h-5 w-5"/>
+                                        )}
+                                    </button>
+                                </div>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
                     )}
                 />
+
                 <div className="text-center text-sm">
                     <p className="text-muted-foreground">
                         Не получили письмо?{' '}
