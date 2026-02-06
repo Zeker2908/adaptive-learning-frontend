@@ -57,9 +57,7 @@ export function ResetPassword({token, onSuccess}: ResetPasswordProps) {
 
             toast.success('Пароль успешно изменен!');
 
-            if (onSuccess) {
-                onSuccess();
-            }
+            onSuccess?.();
         } catch (err) {
             handleError(err);
         } finally {

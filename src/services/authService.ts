@@ -35,10 +35,10 @@ export const authService = {
     },
 
     async logout(): Promise<void> {
-        return api.delete<void>('/auth/sessions/current');
+        return api.delete<void>('/auth/logout');
     },
 
     async logoutAll(): Promise<void> {
-        return api.delete<void>('/auth/sessions');
+        return api.delete<void>('/auth/logout/all');
     },
 };

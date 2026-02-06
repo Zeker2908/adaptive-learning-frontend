@@ -6,10 +6,11 @@ import * as z from 'zod';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
-import {useAuth} from "@/hooks/useAuth.ts";
 import {useError} from '@/hooks/useError';
 import type {RegisterFormValues, RegisterRequest} from '@/types/auth';
 import {Link} from "react-router-dom";
+import {authService} from "@/services/authService.ts";
+import {toast} from "sonner";
 
 const registerSchema = z.object({
     email: z.string().email('Некорректный email адрес'),
@@ -27,7 +28,6 @@ const registerSchema = z.object({
 });
 
 export function RegisterForm() {
-    const {register} = useAuth();
     const {handleError} = useError();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -54,7 +54,11 @@ export function RegisterForm() {
                 password: data.password,
             };
 
-            await register(registerData);
+            await authService.register(registerData);
+            toast.success('Регистрация прошла успешно! Пожалуйста, проверьте свою электронную почту для подтверждения учетной записи', {
+                duration: 6000,
+                position: 'top-right',
+            });
         } catch (err) {
             handleError(err);
         } finally {

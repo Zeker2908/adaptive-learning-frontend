@@ -1,11 +1,10 @@
 // components/auth/EmailConfirmationForm.tsx
 import {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {useAuth} from '@/hooks/useAuth';
 import {useError} from '@/hooks/useError';
+import {useNavigate} from "react-router-dom";
 import {toast} from 'sonner';
-import type {ConfirmationEmailRequest} from '@/types/auth';
+import {useAuthStore} from "@/store/authStore.ts";
 
 interface EmailConfirmationFormProps {
     token: string;
@@ -13,33 +12,34 @@ interface EmailConfirmationFormProps {
 
 export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
     const navigate = useNavigate();
-    const {confirmEmail: confirmAccount} = useAuth();
+    const {confirmEmail} = useAuthStore();
     const {handleError} = useError();
     const [isLoading, setIsLoading] = useState(true);
     const [isConfirmed, setIsConfirmed] = useState(false);
 
     useEffect(() => {
-        const confirmEmail = async () => {
-            if (!token) {
-                toast.error('Некорректная ссылка подтверждения');
-                navigate('/login', {replace: true});
-                return;
-            }
-
-            const confirmationRequest: ConfirmationEmailRequest = {token};
-
+        const confirm = async () => {
             try {
-                await confirmAccount(confirmationRequest);
+                await confirmEmail({token});
+                toast.success('Адрес электронной почты успешно подтвержден!', {
+                    duration: 3000,
+                    position: 'top-right',
+                });
+                navigate('/dashboard', {replace: true});
                 setIsConfirmed(true);
             } catch (error) {
+                setIsConfirmed(false);
                 handleError(error);
+                setTimeout(() => {
+                    navigate('/login', {replace: true});
+                }, 3000);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        confirmEmail();
-    }, [token, navigate, handleError, confirmAccount]);
+        confirm();
+    }, [token, handleError, navigate, confirmEmail]);
 
     return (
         <Card className="w-full max-w-md">
@@ -64,7 +64,7 @@ export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <p className="text-green-600">Ваш email подтвержден!</p>
+                        <p className="text-green-600">Ваш email подтверждён!</p>
                         <p className="text-muted-foreground text-sm">Перенаправляем в личный кабинет...</p>
                     </div>
                 )}

@@ -4,13 +4,14 @@ import {useNavigate} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {userService} from "@/services/userService.ts";
-import {useAuth} from "@/hooks/useAuth.ts";
 import {useError} from "@/hooks/useError.ts";
 import type {UserResponse} from '@/types/user';
+import {toast} from 'sonner';
+import {useAuthStore} from "@/store/authStore.ts";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const {logout, logoutAll} = useAuth();
+    const {logout, logoutAll} = useAuthStore();
     const [isLoading, setIsLoading] = useState(true);
     const [userData, setUserData] = useState<UserResponse | null>(null);
     const {handleError} = useError();
@@ -30,17 +31,31 @@ export default function DashboardPage() {
 
     const handleLogout = async () => {
         try {
-            await logout();
+            logout();
+            toast.success('Выход из системы произошел успешно', {
+                duration: 3000,
+                position: 'top-right',
+            });
+            navigate('/login', {replace: true});
         } catch (error) {
             handleError(error);
+            useAuthStore.getState().clearToken();
+            navigate('/login', {replace: true});
         }
     };
 
     const handleLogoutAll = async () => {
         try {
-            await logoutAll();
+            logoutAll();
+            toast.success('Вы успешно вышли из системы на всех устройствах', {
+                duration: 3000,
+                position: 'top-right',
+            });
+            navigate('/login', {replace: true});
         } catch (error) {
             handleError(error);
+            useAuthStore.getState().clearToken();
+            navigate('/login', {replace: true});
         }
     };
 

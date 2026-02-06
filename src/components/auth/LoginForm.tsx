@@ -9,7 +9,8 @@ import {Input} from '@/components/ui/input';
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
 import {useError} from '@/hooks/useError';
 import type {LoginRequest} from '@/types/auth';
-import {useAuth} from "@/hooks/useAuth.ts";
+import {toast} from "sonner";
+import {useAuthStore} from "@/store/authStore.ts";
 
 const loginSchema = z.object({
     email: z.string().email('Некорректный email адрес'),
@@ -18,8 +19,9 @@ const loginSchema = z.object({
 
 export function LoginForm() {
     useNavigate();
-    const {login} = useAuth();
+    const {login} = useAuthStore();
     const {handleError} = useError();
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<LoginRequest>({
@@ -34,6 +36,11 @@ export function LoginForm() {
         try {
             setIsLoading(true);
             await login(data);
+            toast.success('Вход выполнен успешно!', {
+                duration: 3000,
+                position: 'top-right',
+            });
+            navigate('/dashboard', {replace: true});
         } catch (err) {
             handleError(err);
         } finally {
