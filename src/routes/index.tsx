@@ -7,6 +7,9 @@ import EmailConfirmationPage from '@/pages/EmailConfirmation';
 import {ProtectedRoute} from './ProtectedRoute';
 import NotFoundPage from "@/pages/NotFound.tsx";
 import OAuthCallbackPage from "@/pages/OAuthCallback.tsx";
+import ResendVerificationPage from "@/pages/ResendVerification.tsx";
+import ResetPasswordPage from "@/pages/ResetPassword.tsx";
+import ForgotPasswordPage from "@/pages/ForgotPassword.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -24,6 +27,18 @@ export const router = createBrowserRouter([
     {
         path: '/email-confirmation',
         element: <EmailConfirmationPage/>,
+    },
+    {
+        path: '/resend-verification',
+        element: <ResendVerificationPage/>,
+    },
+    {
+        path: '/forgot-password',
+        element: <ForgotPasswordPage/>,
+    },
+    {
+        path: '/password-reset',
+        element: <ResetPasswordPage/>,
     },
     {
         path: '/oauth/callback',

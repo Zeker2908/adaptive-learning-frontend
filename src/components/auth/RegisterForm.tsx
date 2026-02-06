@@ -9,6 +9,7 @@ import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/
 import {useAuth} from "@/hooks/useAuth.ts";
 import {useError} from '@/hooks/useError';
 import type {RegisterFormValues, RegisterRequest} from '@/types/auth';
+import {Link} from "react-router-dom";
 
 const registerSchema = z.object({
     email: z.string().email('Некорректный email адрес'),
@@ -135,6 +136,14 @@ export function RegisterForm() {
                         </FormItem>
                     )}
                 />
+                <div className="text-center text-sm">
+                    <p className="text-muted-foreground">
+                        Не получили письмо?{' '}
+                        <Link to="/resend-verification" className="text-primary hover:underline font-medium">
+                            Отправить повторно
+                        </Link>
+                    </p>
+                </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? 'Создание аккаунта...' : 'Создать аккаунт'}

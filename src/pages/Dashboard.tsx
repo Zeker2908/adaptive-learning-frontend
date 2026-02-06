@@ -10,19 +10,13 @@ import type {UserResponse} from '@/types/user';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const {token, isAuthenticated, logout} = useAuth();
+    const {logout} = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [userData, setUserData] = useState<UserResponse | null>(null);
     const {handleError} = useError();
 
-    // Проверка токена и получение данных пользователя
     useEffect(() => {
-        const validateToken = async () => {
-            if (!isAuthenticated || !token) {
-                navigate('/login', {replace: true});
-                return;
-            }
-
+        const loadUserData = async () => {
             try {
                 const user = await userService.currentUser();
                 setUserData(user);
@@ -31,8 +25,8 @@ export default function DashboardPage() {
             }
         };
 
-        validateToken();
-    }, [isAuthenticated, token, navigate]);
+        loadUserData();
+    }, []);
 
     const handleLogout = async () => {
         try {

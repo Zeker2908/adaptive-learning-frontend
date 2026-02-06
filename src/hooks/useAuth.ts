@@ -53,7 +53,7 @@ export function useAuth() {
     const logout = async () => {
         try {
             storeLogout();
-            toast.success('Выход из системы пройден успешно', {
+            toast.success('Выход из системы произошел успешно', {
                 duration: 3000,
                 position: 'top-right',
             });

@@ -22,7 +22,6 @@ export interface RegisterRequest {
 }
 
 export interface ResetPasswordFormValues{
-    token: string;
     password: string;
     confirmPassword: string;
 }

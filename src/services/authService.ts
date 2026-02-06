@@ -19,19 +19,19 @@ export const authService = {
     },
 
     async confirmEmail(data: ConfirmationEmailRequest): Promise<AuthenticationResponse> {
-        return api.patch<AuthenticationResponse>('/auth/email/verify', data);
+        return api.post<AuthenticationResponse>('/auth/verify-email', data);
     },
 
     async resendConfirmationEmail(data: ResendRequest): Promise<void> {
-        return api.post('/auth/email/resend-verification', data);
+        return api.post('/auth/resend-verification', data);
     },
 
     async forgotPassword(data: ResendRequest): Promise<void> {
-        return api.post('/auth/password/reset-request', data);
+        return api.post('/auth/password/forgot', data);
     },
 
     async resetPassword(data: ResetPasswordRequest): Promise<void> {
-        return api.patch('/auth/password', data);
+        return api.patch('/auth/password/reset', data);
     },
 
     async logout(): Promise<void> {
