@@ -19,6 +19,8 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
     USER_ALREADY_ADMIN: 'Пользователь уже является администратором',
     LOCAL_AUTH_NOT_FOUND: 'Локальная авторизация не найдена',
     ACCOUNT_BLOCKED: 'Аккаунт не активирован',
+    EMAIL_TOKEN_EXPIRED: 'Срок действия ссылки истёк',
+    INVALID_EMAIL_TOKEN: 'Недействительная ссылка',
 
     // OAuth
     O_AUTH2_PROVIDER: 'Ошибка авторизации через провайдера',
