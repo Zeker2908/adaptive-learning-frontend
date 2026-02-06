@@ -2,6 +2,7 @@
 import {useCallback, useState} from 'react';
 import type {ApiError} from '@/types/auth';
 import {toast} from 'sonner';
+import {ERROR_CODE_MESSAGES} from "@/locales/ru/errorCodes.ts";
 
 export function useError() {
     const [error, setError] = useState<ApiError | null>(null);
@@ -17,10 +18,18 @@ export function useError() {
         };
 
         if (isApiError(err)) {
-            toast.error(err.message || 'An error occurred');
+            let errorMessage = 'Произошла непредвиденная ошибка';
+
+            if (err.errorCode && err.errorCode in ERROR_CODE_MESSAGES) {
+                errorMessage = ERROR_CODE_MESSAGES[err.errorCode];
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            toast.error(errorMessage);
             setError(err);
         } else {
-            toast.error('An unexpected error occurred');
+            toast.error('Произошла непредвиденная ошибка');
             setError(null);
         }
     }, []);

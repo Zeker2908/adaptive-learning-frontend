@@ -1,8 +1,8 @@
 // pages/EmailConfirmation.tsx
-import { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { EmailConfirmationForm } from '@/components/auth/EmailConfirmationForm';
+import {useEffect} from 'react';
+import {useNavigate, useSearchParams} from 'react-router-dom';
+import {toast} from 'sonner';
+import {EmailConfirmationForm} from '@/components/auth/EmailConfirmationForm';
 
 export default function EmailConfirmationPage() {
     const [searchParams] = useSearchParams();
@@ -13,8 +13,8 @@ export default function EmailConfirmationPage() {
     // Если токена нет — сразу редиректим
     useEffect(() => {
         if (!token) {
-            toast.error('Invalid confirmation link');
-            navigate('/login', { replace: true });
+            toast.error('Некорректная ссылка подтверждения');
+            navigate('/login', {replace: true});
         }
     }, [token, navigate]);
 
@@ -24,7 +24,7 @@ export default function EmailConfirmationPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
-            <EmailConfirmationForm token={token} />
+            <EmailConfirmationForm token={token}/>
         </div>
     );
 }

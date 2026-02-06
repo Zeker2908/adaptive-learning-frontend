@@ -10,15 +10,15 @@ export default function NotFoundPage() {
                 <CardHeader className="text-center">
                     <CardTitle className="text-4xl font-bold text-gray-900">404</CardTitle>
                     <CardDescription className="text-lg">
-                        Page not found
+                        Страница не найдена
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                     <p className="text-gray-600 mb-6">
-                        Sorry, the page you're looking for doesn't exist.
+                        Извините, страница, которую вы ищете, не существует.
                     </p>
                     <Button asChild>
-                        <Link to="/dashboard">Go to Dashboard</Link>
+                        <Link to="/dashboard">Перейти в личный кабинет</Link>
                     </Button>
                 </CardContent>
             </Card>

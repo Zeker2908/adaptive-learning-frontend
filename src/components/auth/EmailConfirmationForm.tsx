@@ -21,7 +21,7 @@ export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
     useEffect(() => {
         const confirmEmail = async () => {
             if (!token) {
-                toast.error('Invalid confirmation link');
+                toast.error('Некорректная ссылка подтверждения');
                 navigate('/login', {replace: true});
                 return;
             }
@@ -45,14 +45,14 @@ export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
         <Card className="w-full max-w-md">
             <CardHeader className="space-y-1 text-center">
                 <CardTitle className="text-2xl font-bold">
-                    {isLoading ? 'Confirming Email...' : isConfirmed ? 'Success!' : 'Error'}
+                    {isLoading ? 'Подтверждение Email...' : isConfirmed ? 'Успешно!' : 'Ошибка'}
                 </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center space-y-4">
                 {isLoading && (
                     <div className="flex flex-col items-center space-y-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        <p className="text-muted-foreground">Verifying your email...</p>
+                        <p className="text-muted-foreground">Проверяем ваш email...</p>
                     </div>
                 )}
 
@@ -64,8 +64,8 @@ export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <p className="text-green-600">Your email has been confirmed!</p>
-                        <p className="text-muted-foreground text-sm">Redirecting to dashboard...</p>
+                        <p className="text-green-600">Ваш email подтвержден!</p>
+                        <p className="text-muted-foreground text-sm">Перенаправляем в личный кабинет...</p>
                     </div>
                 )}
 
@@ -78,8 +78,8 @@ export function EmailConfirmationForm({token}: EmailConfirmationFormProps) {
                                       d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </div>
-                        <p className="text-red-600">Failed to confirm email</p>
-                        <p className="text-muted-foreground text-sm">Redirecting to login...</p>
+                        <p className="text-red-600">Не удалось подтвердить email</p>
+                        <p className="text-muted-foreground text-sm">Перенаправляем на вход...</p>
                     </div>
                 )}
             </CardContent>

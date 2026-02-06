@@ -21,6 +21,21 @@ export interface RegisterRequest {
     password: string;
 }
 
+export interface ResetPasswordFormValues{
+    token: string;
+    password: string;
+    confirmPassword: string;
+}
+
+export interface ResetPasswordRequest{
+    token: string;
+    password: string;
+}
+
+export interface ResendRequest {
+    email: string;
+}
+
 export interface ConfirmationEmailRequest {
     token: string;
 }
@@ -34,7 +49,7 @@ export interface ApiError {
     path: string;
     status: number;
     error: string;
+    errorCode: string;
     message: string;
-    requestId: string;
-    reason?: string; // TOKEN_EXPIRED
+    requestId?: string;
 }

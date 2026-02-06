@@ -50,17 +50,10 @@ export const api = {
             const response = await fetch(url, config);
 
             if (!response.ok) {
-                const errorData: ApiError = await response.json().catch(() => ({
-                    timestamp: new Date().toISOString(),
-                    path: endpoint,
-                    status: response.status.toString(),
-                    error: response.statusText,
-                    message: 'An error occurred',
-                    requestId: 'unknown',
-                }));
+                const errorData: ApiError = await response.json();
 
                 // Обработка TOKEN_EXPIRED
-                if (errorData.reason === 'TOKEN_EXPIRED') {
+                if (errorData.errorCode === 'TOKEN_EXPIRED') {
                     if (isRefreshing) {
                         // Ждём завершения текущего refresh
                         return new Promise((resolve, reject) => {

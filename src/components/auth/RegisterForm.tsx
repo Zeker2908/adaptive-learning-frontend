@@ -11,17 +11,17 @@ import {useError} from '@/hooks/useError';
 import type {RegisterFormValues, RegisterRequest} from '@/types/auth';
 
 const registerSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    firstName: z.string().min(1, 'First name is required'),
+    email: z.string().email('Некорректный email адрес'),
+    firstName: z.string().min(1, 'Имя обязательно'),
     lastName: z.string().optional(),
     password: z
         .string()
-        .min(8, 'Password must be at least 8 characters')
-        .regex(/[a-zA-Z]/, 'Password must contain at least one letter')
-        .regex(/[0-9]/, 'Password must contain at least one number'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+        .min(8, 'Пароль должен быть не менее 8 символов')
+        .regex(/[a-zA-Z]/, 'Пароль должен содержать хотя бы одну букву')
+        .regex(/[0-9]/, 'Пароль должен содержать хотя бы одну цифру'),
+    confirmPassword: z.string().min(1, 'Подтвердите пароль'),
 }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Пароли не совпадают",
     path: ["confirmPassword"],
 });
 
@@ -70,9 +70,9 @@ export function RegisterForm() {
                         name="firstName"
                         render={({field}) => (
                             <FormItem>
-                                <FormLabel>First Name *</FormLabel>
+                                <FormLabel>Имя *</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="John" {...field} />
+                                    <Input placeholder="Иван" {...field} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -84,9 +84,9 @@ export function RegisterForm() {
                         name="lastName"
                         render={({field}) => (
                             <FormItem>
-                                <FormLabel>Last Name</FormLabel>
+                                <FormLabel>Фамилия</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Doe" {...field} />
+                                    <Input placeholder="Иванов" {...field} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -101,7 +101,7 @@ export function RegisterForm() {
                         <FormItem>
                             <FormLabel>Email *</FormLabel>
                             <FormControl>
-                                <Input placeholder="your@email.com" {...field} />
+                                <Input placeholder="ваш@email.com" {...field} />
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
@@ -113,7 +113,7 @@ export function RegisterForm() {
                     name="password"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Password *</FormLabel>
+                            <FormLabel>Пароль *</FormLabel>
                             <FormControl>
                                 <Input type="password" placeholder="••••••••" {...field} />
                             </FormControl>
@@ -127,7 +127,7 @@ export function RegisterForm() {
                     name="confirmPassword"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Confirm Password *</FormLabel>
+                            <FormLabel>Подтверждение пароля *</FormLabel>
                             <FormControl>
                                 <Input type="password" placeholder="••••••••" {...field} />
                             </FormControl>
@@ -137,7 +137,7 @@ export function RegisterForm() {
                 />
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating account...' : 'Create Account'}
+                    {isLoading ? 'Создание аккаунта...' : 'Создать аккаунт'}
                 </Button>
             </form>
         </Form>

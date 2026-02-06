@@ -18,7 +18,7 @@ export function useAuth() {
 
     const login = async (credentials: LoginRequest) => {
         await storeLogin(credentials);
-        toast.success('Successfully signed in!', {
+        toast.success('Вход выполнен успешно!', {
             duration: 3000,
             position: 'top-right',
         });
@@ -27,7 +27,7 @@ export function useAuth() {
 
     const register = async (credentials: RegisterRequest) => {
         await authService.register(credentials);
-        toast.success('Registration successful! Please check your email to confirm your account.', {
+        toast.success('Регистрация прошла успешно! Пожалуйста, проверьте свою электронную почту для подтверждения учетной записи', {
             duration: 6000,
             position: 'top-right',
         });
@@ -37,7 +37,7 @@ export function useAuth() {
     const confirmEmail = async (token: ConfirmationEmailRequest) => {
         try {
             await storeConfirmEmail(token);
-            toast.success('Email confirmed successfully!', {
+            toast.success('Адрес электронной почты успешно подтвержден!', {
                 duration: 3000,
                 position: 'top-right',
             });
@@ -53,7 +53,7 @@ export function useAuth() {
     const logout = async () => {
         try {
             storeLogout();
-            toast.success('Successfully logged out', {
+            toast.success('Выход из системы пройден успешно', {
                 duration: 3000,
                 position: 'top-right',
             });
@@ -68,7 +68,7 @@ export function useAuth() {
     const logoutAll = async () => {
         try {
             storeLogoutAll();
-            toast.success('Logged out from all devices', {
+            toast.success('Вы успешно вышли из системы на всех устройствах', {
                 duration: 3000,
                 position: 'top-right',
             });

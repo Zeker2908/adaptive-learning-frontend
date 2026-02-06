@@ -1,12 +1,12 @@
 // pages/Login.tsx
-import { LoginForm } from '@/components/auth/LoginForm';
-import { AuthLayout } from '@/components/auth/AuthLayout';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { FcGoogle } from 'react-icons/fc';
-import { oauthService } from '@/services/oauthService';
-import { useEffect } from 'react';
-import { toast } from 'sonner';
+import {LoginForm} from '@/components/auth/LoginForm';
+import {AuthLayout} from '@/components/auth/AuthLayout';
+import {Link, useLocation} from 'react-router-dom';
+import {Button} from '@/components/ui/button';
+import {FcGoogle} from 'react-icons/fc';
+import {oauthService} from '@/services/oauthService';
+import {useEffect} from 'react';
+import {toast} from 'sonner';
 
 export default function LoginPage() {
     const location = useLocation();
@@ -27,17 +27,17 @@ export default function LoginPage() {
 
     return (
         <AuthLayout
-            title="Welcome Back"
-            description="Sign in to your account to continue"
+            title="С возвращением"
+            description="Войдите в свой аккаунт, чтобы продолжить"
         >
-            <LoginForm />
+            <LoginForm/>
 
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                    <span className="px-2 bg-white text-gray-500">Или продолжите через</span>
                 </div>
             </div>
 
@@ -47,14 +47,14 @@ export default function LoginPage() {
                 className="w-full flex items-center justify-center gap-2"
                 onClick={handleGoogleLogin}
             >
-                <FcGoogle className="h-5 w-5" />
-                Sign in with Google
+                <FcGoogle className="h-5 w-5"/>
+                Войти через Google
             </Button>
 
             <div className="mt-4 text-center text-sm">
-                <span className="text-muted-foreground">Don't have an account? </span>
+                <span className="text-muted-foreground">Нет аккаунта? </span>
                 <Link to="/register" className="text-primary hover:underline">
-                    Sign up
+                    Зарегистрироваться
                 </Link>
             </div>
         </AuthLayout>

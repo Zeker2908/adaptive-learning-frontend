@@ -55,26 +55,26 @@ export default function DashboardPage() {
             <div className="max-w-6xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">
-                        Welcome, {userData?.firstName}!
+                        Добро пожаловать, {userData?.firstName}!
                     </h1>
-                    <p className="text-gray-600">Manage your account and track your progress</p>
+                    <p className="text-gray-600">Управляйте аккаунтом и отслеживайте прогресс</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* User Info Card */}
+                    {/* Карточка информации о пользователе */}
                     <Card className="col-span-1 md:col-span-2">
                         <CardHeader>
-                            <CardTitle>Personal Information</CardTitle>
-                            <CardDescription>Your account details</CardDescription>
+                            <CardTitle>Персональная информация</CardTitle>
+                            <CardDescription>Детали вашего аккаунта</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-500">First Name</p>
+                                    <p className="text-sm text-gray-500">Имя</p>
                                     <p className="font-medium">{userData?.firstName || '-'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Last Name</p>
+                                    <p className="text-sm text-gray-500">Фамилия</p>
                                     <p className="font-medium">{userData?.lastName || '-'}</p>
                                 </div>
                                 <div className="sm:col-span-2">
@@ -85,17 +85,17 @@ export default function DashboardPage() {
 
                             <div className="pt-4">
                                 <Button variant="outline" onClick={() => navigate('/profile')}>
-                                    Edit Profile
+                                    Редактировать профиль
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Quick Actions Card */}
+                    {/* Карточка быстрых действий */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Quick Actions</CardTitle>
-                            <CardDescription>Common account actions</CardDescription>
+                            <CardTitle>Быстрые действия</CardTitle>
+                            <CardDescription>Частые действия с аккаунтом</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Button
@@ -103,39 +103,39 @@ export default function DashboardPage() {
                                 className="w-full"
                                 onClick={() => navigate('/settings')}
                             >
-                                Account Settings
+                                Настройки аккаунта
                             </Button>
                             <Button
                                 variant="destructive"
                                 className="w-full"
                                 onClick={handleLogout}
                             >
-                                Sign Out
+                                Выйти
                             </Button>
                         </CardContent>
                     </Card>
 
-                    {/* Stats Cards (placeholder) */}
+                    {/* Карточки статистики (заглушки) */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Activity</CardTitle>
-                            <CardDescription>Your recent activity</CardDescription>
+                            <CardTitle>Активность</CardTitle>
+                            <CardDescription>Ваша недавняя активность</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="text-center text-gray-500 py-8">
-                                No recent activity
+                                Нет недавней активности
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Progress</CardTitle>
-                            <CardDescription>Your learning progress</CardDescription>
+                            <CardTitle>Прогресс</CardTitle>
+                            <CardDescription>Ваш прогресс обучения</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="text-center text-gray-500 py-8">
-                                Track your progress here
+                                Отслеживайте прогресс здесь
                             </div>
                         </CardContent>
                     </Card>

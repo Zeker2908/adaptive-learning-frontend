@@ -12,8 +12,8 @@ import type {LoginRequest} from '@/types/auth';
 import {useAuth} from "@/hooks/useAuth.ts";
 
 const loginSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(1, 'Password is required'),
+    email: z.string().email('Некорректный email адрес'),
+    password: z.string().min(1, 'Пароль обязателен'),
 });
 
 export function LoginForm() {
@@ -51,7 +51,7 @@ export function LoginForm() {
                         <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                                <Input placeholder="your@email.com" {...field} />
+                                <Input placeholder="ваш@email.com" {...field} />
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
@@ -63,7 +63,7 @@ export function LoginForm() {
                     name="password"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>Пароль</FormLabel>
                             <FormControl>
                                 <Input type="password" placeholder="••••••••" {...field} />
                             </FormControl>
@@ -73,7 +73,7 @@ export function LoginForm() {
                 />
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign In'}
+                    {isLoading ? 'Вход...' : 'Войти'}
                 </Button>
             </form>
         </Form>

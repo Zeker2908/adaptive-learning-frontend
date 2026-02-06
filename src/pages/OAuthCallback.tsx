@@ -16,17 +16,17 @@ export default function OAuthCallbackPage() {
 
         if (error) {
             const decodedError = decodeURIComponent(error);
-            toast.error(`Sign in failed: ${decodedError}`);
+            toast.error(`Ошибка входа: ${decodedError}`);
             navigate('/login', {replace: true});
             return;
         }
 
         if (token) {
             setToken(token);
-            toast.success('Successfully signed in with Google!');
+            toast.success('Успешный вход через Google!');
             navigate('/dashboard', {replace: true});
         } else {
-            toast.error('Authentication failed. Please try again.');
+            toast.error('Ошибка аутентификации. Попробуйте снова.');
             navigate('/login', {replace: true});
         }
     }, [searchParams, navigate, setToken]);
@@ -36,7 +36,7 @@ export default function OAuthCallbackPage() {
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="text-center">
-                        {searchParams.get('error') ? 'Sign In Failed' : 'Signing In...'}
+                        {searchParams.get('error') ? 'Ошибка входа' : 'Вход...'}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center">

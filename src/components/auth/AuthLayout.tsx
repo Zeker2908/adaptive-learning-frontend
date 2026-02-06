@@ -1,5 +1,5 @@
 // components/auth/AuthLayout.tsx
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import * as React from "react";
 
 interface AuthLayoutProps {
@@ -8,7 +8,7 @@ interface AuthLayoutProps {
     description: string;
 }
 
-export function AuthLayout({ children, title, description }: AuthLayoutProps) {
+export function AuthLayout({children, title, description}: AuthLayoutProps) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
             <Card className="w-full max-w-md">
