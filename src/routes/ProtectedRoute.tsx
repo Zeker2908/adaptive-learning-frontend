@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import * as React from "react";
 
 interface ProtectedRouteProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {

@@ -10,7 +10,7 @@ import type {UserResponse} from '@/types/user';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const {logout} = useAuth();
+    const {logout, logoutAll} = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [userData, setUserData] = useState<UserResponse | null>(null);
     const {handleError} = useError();
@@ -31,6 +31,14 @@ export default function DashboardPage() {
     const handleLogout = async () => {
         try {
             await logout();
+        } catch (error) {
+            handleError(error);
+        }
+    };
+
+    const handleLogoutAll = async () => {
+        try {
+            await logoutAll();
         } catch (error) {
             handleError(error);
         }
@@ -105,6 +113,13 @@ export default function DashboardPage() {
                                 onClick={handleLogout}
                             >
                                 Выйти
+                            </Button>
+                            <Button
+                                variant="default"
+                                className="w-full"
+                                onClick={handleLogoutAll}
+                            >
+                                Выйти на всех устройствах
                             </Button>
                         </CardContent>
                     </Card>
