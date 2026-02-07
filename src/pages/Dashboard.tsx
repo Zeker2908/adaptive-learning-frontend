@@ -15,7 +15,7 @@ import {DashboardLayout} from "@/components/layout/DashboardLayout.tsx";
 export default function DashboardPage() {
     const navigate = useNavigate();
     const {handleError} = useError();
-    const {user, fetchUser} = useUserStore();
+    const {user} = useUserStore();
 
     const [isLoading, setIsLoading] = useState(true);
     const [activity, setActivity] = useState<DailyActivityResponse[]>([]);
@@ -29,7 +29,6 @@ export default function DashboardPage() {
     useEffect(() => {
         const load = async () => {
             try {
-                await fetchUser();
                 const activityData = await solutionService.getDailyActivities();
                 setActivity(activityData);
             } catch (e) {
@@ -40,7 +39,7 @@ export default function DashboardPage() {
         };
 
         load();
-    }, [fetchUser, handleError]);
+    }, [handleError]);
 
     const loadMoreProgress = useCallback(async () => {
         if (progressLoading || progressLast) return;
