@@ -20,6 +20,7 @@ export default function DashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activity, setActivity] = useState<DailyActivityResponse[]>([]);
 
+    const [progressError, setProgressError] = useState(false);
     const [progress, setProgress] = useState<UserProgressResponse[]>([]);
     const [progressPage, setProgressPage] = useState(0);
     const [progressLast, setProgressLast] = useState(false);
@@ -46,6 +47,7 @@ export default function DashboardPage() {
 
         try {
             setProgressLoading(true);
+            setProgressError(false);
 
             const page = await solutionService.getUserProgress(progressPage);
 
@@ -54,10 +56,16 @@ export default function DashboardPage() {
             setProgressPage(prev => prev + 1);
         } catch (e) {
             handleError(e);
+            setProgressError(true);
         } finally {
             setProgressLoading(false);
         }
     }, [progressLoading, progressLast, progressPage, handleError]);
+
+    const retryLoadProgress = useCallback(() => {
+        setProgressError(false);
+        loadMoreProgress();
+    }, [loadMoreProgress]);
 
     if (isLoading) {
         return (
@@ -78,7 +86,9 @@ export default function DashboardPage() {
                         data={progress}
                         isLoading={progressLoading}
                         isLast={progressLast}
+                        hasError={progressError}
                         onLoadMore={loadMoreProgress}
+                        onRetry={retryLoadProgress}
                     />
                     <ActivityChartCard data={activity}/>
                 </div>

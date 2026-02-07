@@ -7,20 +7,25 @@ interface Props {
     data: UserProgressResponse[];
     isLoading: boolean;
     isLast: boolean;
+    hasError: boolean; // Новый пропс
     onLoadMore: () => void;
+    onRetry: () => void; // Новый пропс
 }
 
 export function ProgressCard({
                                  data,
                                  isLoading,
                                  isLast,
+                                 hasError,
                                  onLoadMore,
+                                 onRetry,
                              }: Props) {
+
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (!loadMoreRef.current || !scrollContainerRef.current || isLast) return;
+        if (!loadMoreRef.current || !scrollContainerRef.current || isLast || hasError) return;
 
         const observer = new IntersectionObserver(
             entries => {
@@ -38,7 +43,7 @@ export function ProgressCard({
         observer.observe(loadMoreRef.current);
 
         return () => observer.disconnect();
-    }, [onLoadMore, isLast]);
+    }, [onLoadMore, isLast, hasError]);
 
     return (
         <Card className="h-75 flex flex-col">
@@ -65,7 +70,21 @@ export function ProgressCard({
                     </div>
                 )}
 
-                {!isLoading && data.length === 0 && (
+                {hasError && (
+                    <div className="text-center py-4">
+                        <p className="text-sm text-destructive mb-2">
+                            Не удалось загрузить данные
+                        </p>
+                        <button
+                            onClick={onRetry}
+                            className="text-sm text-primary hover:underline"
+                        >
+                            Повторить
+                        </button>
+                    </div>
+                )}
+
+                {!isLoading && !hasError && data.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">
                         Пока нет данных
                     </div>
@@ -76,10 +95,10 @@ export function ProgressCard({
 }
 
 function getConfidenceLevel(confidence: number) {
-    if (confidence < 0.35) return { label: 'Низкая', color: 'bg-red-500' };
-    if (confidence < 0.6)  return { label: 'Средняя', color: 'bg-yellow-500' };
-    if (confidence < 0.8)  return { label: 'Хорошая', color: 'bg-blue-500' };
-    return { label: 'Отличная', color: 'bg-green-500' };
+    if (confidence < 0.35) return {label: 'Низкая', color: 'bg-red-500'};
+    if (confidence < 0.6) return {label: 'Средняя', color: 'bg-yellow-500'};
+    if (confidence < 0.8) return {label: 'Хорошая', color: 'bg-blue-500'};
+    return {label: 'Отличная', color: 'bg-green-500'};
 }
 
 
