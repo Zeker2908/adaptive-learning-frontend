@@ -1,6 +1,5 @@
 // components/auth/LoginForm.tsx
 import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,7 +19,6 @@ const loginSchema = z.object({
 export function LoginForm() {
     const {login} = useAuthStore();
     const {handleError} = useError();
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<LoginRequest>({
@@ -39,7 +37,6 @@ export function LoginForm() {
                 duration: 3000,
                 position: 'top-right',
             });
-            navigate('/dashboard', {replace: true});
         } catch (err) {
             handleError(err);
         } finally {

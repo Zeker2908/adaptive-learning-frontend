@@ -1,3 +1,5 @@
+// services/userService.ts
+
 import {api} from "./api";
 import type {UserResponse} from "@/types/user";
 

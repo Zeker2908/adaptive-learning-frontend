@@ -1,168 +1,95 @@
-// pages/Dashboard.tsx
-import {useEffect, useState} from 'react';
+// pages/DashboardPage.tsx
+import {useCallback, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {userService} from "@/services/userService.ts";
-import {useError} from "@/hooks/useError.ts";
+import {userService} from '@/services/userService';
+import {solutionService} from '@/services/solutionService';
+import {useError} from '@/hooks/useError';
+import {useAuthStore} from '@/store/authStore';
 import type {UserResponse} from '@/types/user';
-import {toast} from 'sonner';
-import {useAuthStore} from "@/store/authStore.ts";
+import type {DailyActivityResponse, UserProgressResponse,} from '@/types/solution';
+
+import {DashboardHeader} from '@/components/dashboard/DashboardHeader';
+import {UserInfoCard} from '@/components/dashboard/UserInfoCard';
+import {QuickActionsCard} from '@/components/dashboard/QuickActionsCard';
+import {ActivityChartCard} from '@/components/dashboard/ActivityChartCard';
+import {ProgressCard} from '@/components/dashboard/ProgressCard';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
     const {logout, logoutAll} = useAuthStore();
-    const [isLoading, setIsLoading] = useState(true);
-    const [userData, setUserData] = useState<UserResponse | null>(null);
     const {handleError} = useError();
 
+    const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState<UserResponse | null>(null);
+    const [activity, setActivity] = useState<DailyActivityResponse[]>([]);
+
+    const [progress, setProgress] = useState<UserProgressResponse[]>([]);
+    const [progressPage, setProgressPage] = useState(0);
+    const [progressLast, setProgressLast] = useState(false);
+    const [progressLoading, setProgressLoading] = useState(false);
+
     useEffect(() => {
-        const loadUserData = async () => {
+        const load = async () => {
             try {
-                const user = await userService.currentUser();
-                setUserData(user);
+                const userData = await userService.currentUser();
+                const activityData = await solutionService.getDailyActivities();
+                setUser(userData);
+                setActivity(activityData);
+            } catch (e) {
+                handleError(e);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        loadUserData();
-    }, []);
+        load();
+    }, [handleError]);
 
-    const handleLogout = async () => {
-        try {
-            logout();
-            toast.success('Выход из системы произошел успешно', {
-                duration: 3000,
-                position: 'top-right',
-            });
-            navigate('/login', {replace: true});
-        } catch (error) {
-            handleError(error);
-            useAuthStore.getState().clearToken();
-            navigate('/login', {replace: true});
-        }
-    };
+    const loadMoreProgress = useCallback(async () => {
+        if (progressLoading || progressLast) return;
 
-    const handleLogoutAll = async () => {
         try {
-            logoutAll();
-            toast.success('Вы успешно вышли из системы на всех устройствах', {
-                duration: 3000,
-                position: 'top-right',
-            });
-            navigate('/login', {replace: true});
-        } catch (error) {
-            handleError(error);
-            useAuthStore.getState().clearToken();
-            navigate('/login', {replace: true});
+            setProgressLoading(true);
+
+            const page = await solutionService.getUserProgress(progressPage);
+
+            setProgress(prev => [...prev, ...page.content]);
+            setProgressLast(page.last);
+            setProgressPage(prev => prev + 1);
+        } catch (e) {
+            handleError(e);
+        } finally {
+            setProgressLoading(false);
         }
-    };
+    }, [progressLoading, progressLast, progressPage, handleError]);
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 md:p-8">
-            <div className="max-w-6xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Добро пожаловать, {userData?.firstName}!
-                    </h1>
-                    <p className="text-gray-600">Управляйте аккаунтом и отслеживайте прогресс</p>
-                </div>
+            <div className="max-w-6xl mx-auto space-y-8">
+                <DashboardHeader firstName={user?.firstName}/>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Карточка информации о пользователе */}
-                    <Card className="col-span-1 md:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Персональная информация</CardTitle>
-                            <CardDescription>Детали вашего аккаунта</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-gray-500">Имя</p>
-                                    <p className="font-medium">{userData?.firstName || '-'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Фамилия</p>
-                                    <p className="font-medium">{userData?.lastName || '-'}</p>
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="font-medium">{userData?.email || '-'}</p>
-                                </div>
-                            </div>
-
-                            <div className="pt-4">
-                                <Button variant="outline" onClick={() => navigate('/profile')}>
-                                    Редактировать профиль
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Карточка быстрых действий */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Быстрые действия</CardTitle>
-                            <CardDescription>Частые действия с аккаунтом</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <Button
-                                variant="secondary"
-                                className="w-full"
-                                onClick={() => navigate('/settings')}
-                            >
-                                Настройки аккаунта
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                className="w-full"
-                                onClick={handleLogout}
-                            >
-                                Выйти
-                            </Button>
-                            <Button
-                                variant="default"
-                                className="w-full"
-                                onClick={handleLogoutAll}
-                            >
-                                Выйти на всех устройствах
-                            </Button>
-                        </CardContent>
-                    </Card>
-
-                    {/* Карточки статистики (заглушки) */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Активность</CardTitle>
-                            <CardDescription>Ваша недавняя активность</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-center text-gray-500 py-8">
-                                Нет недавней активности
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Прогресс</CardTitle>
-                            <CardDescription>Ваш прогресс обучения</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-center text-gray-500 py-8">
-                                Отслеживайте прогресс здесь
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <UserInfoCard user={user} onEdit={() => navigate('/profile')}/>
+                    <QuickActionsCard
+                        onSettings={() => navigate('/settings')}
+                        onLogout={logout}
+                        onLogoutAll={logoutAll}
+                    />
+                    <ActivityChartCard data={activity}/>
+                    <ProgressCard
+                        data={progress}
+                        isLoading={progressLoading}
+                        isLast={progressLast}
+                        onLoadMore={loadMoreProgress}
+                    />
                 </div>
             </div>
         </div>
