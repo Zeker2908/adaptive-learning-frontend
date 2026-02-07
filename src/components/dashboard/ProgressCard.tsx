@@ -41,7 +41,7 @@ export function ProgressCard({
     }, [onLoadMore, isLast]);
 
     return (
-        <Card className="h-105 flex flex-col">
+        <Card className="h-75 flex flex-col">
             <CardHeader>
                 <CardTitle>Прогресс</CardTitle>
                 <CardDescription>
@@ -96,7 +96,7 @@ function ProgressItem({item}: { item: UserProgressResponse }) {
                 </span>
             </div>
 
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-1 bg-muted rounded-full overflow-hidden">
                 <div
                     className={`h-full transition-all ${level.color}`}
                     style={{width: `${percent}%`}}

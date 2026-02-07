@@ -1,26 +1,23 @@
 // pages/DashboardPage.tsx
 import {useCallback, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {userService} from '@/services/userService';
+import {useUserStore} from '@/store/userStore';
 import {solutionService} from '@/services/solutionService';
 import {useError} from '@/hooks/useError';
-import {useAuthStore} from '@/store/authStore';
-import type {UserResponse} from '@/types/user';
 import type {DailyActivityResponse, UserProgressResponse,} from '@/types/solution';
 
 import {DashboardHeader} from '@/components/dashboard/DashboardHeader';
 import {UserInfoCard} from '@/components/dashboard/UserInfoCard';
-import {QuickActionsCard} from '@/components/dashboard/QuickActionsCard';
 import {ActivityChartCard} from '@/components/dashboard/ActivityChartCard';
 import {ProgressCard} from '@/components/dashboard/ProgressCard';
+import {DashboardLayout} from "@/components/layout/DashboardLayout.tsx";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const {logout, logoutAll} = useAuthStore();
     const {handleError} = useError();
+    const {user, fetchUser} = useUserStore();
 
     const [isLoading, setIsLoading] = useState(true);
-    const [user, setUser] = useState<UserResponse | null>(null);
     const [activity, setActivity] = useState<DailyActivityResponse[]>([]);
 
     const [progress, setProgress] = useState<UserProgressResponse[]>([]);
@@ -31,9 +28,8 @@ export default function DashboardPage() {
     useEffect(() => {
         const load = async () => {
             try {
-                const userData = await userService.currentUser();
+                await fetchUser();
                 const activityData = await solutionService.getDailyActivities();
-                setUser(userData);
                 setActivity(activityData);
             } catch (e) {
                 handleError(e);
@@ -43,7 +39,7 @@ export default function DashboardPage() {
         };
 
         load();
-    }, [handleError]);
+    }, [fetchUser, handleError]);
 
     const loadMoreProgress = useCallback(async () => {
         if (progressLoading || progressLast) return;
@@ -72,26 +68,21 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+        <DashboardLayout>
             <div className="max-w-6xl mx-auto space-y-8">
                 <DashboardHeader firstName={user?.firstName}/>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <UserInfoCard user={user} onEdit={() => navigate('/profile')}/>
-                    <QuickActionsCard
-                        onSettings={() => navigate('/settings')}
-                        onLogout={logout}
-                        onLogoutAll={logoutAll}
-                    />
-                    <ActivityChartCard data={activity}/>
                     <ProgressCard
                         data={progress}
                         isLoading={progressLoading}
                         isLast={progressLast}
                         onLoadMore={loadMoreProgress}
                     />
+                    <ActivityChartCard data={activity}/>
                 </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 }
