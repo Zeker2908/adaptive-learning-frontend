@@ -70,41 +70,41 @@ export function ProgressCard({
                         Пока нет данных
                     </div>
                 )}
-
-                {isLast && data.length > 0 && (
-                    <div className="text-center text-xs text-muted-foreground py-2">
-                        Всё загружено
-                    </div>
-                )}
             </CardContent>
         </Card>
     );
 }
 
-function getConfidenceColor(confidence: number) {
-    if (confidence < 0.4) return 'bg-red-500';
-    if (confidence < 0.7) return 'bg-yellow-500';
-    return 'bg-green-500';
+function getConfidenceLevel(confidence: number) {
+    if (confidence < 0.35) return { label: 'Низкая', color: 'bg-red-500' };
+    if (confidence < 0.6)  return { label: 'Средняя', color: 'bg-yellow-500' };
+    if (confidence < 0.8)  return { label: 'Хорошая', color: 'bg-blue-500' };
+    return { label: 'Отличная', color: 'bg-green-500' };
 }
+
 
 function ProgressItem({item}: { item: UserProgressResponse }) {
     const percent = Math.round(item.confidence * 100);
-    const color = getConfidenceColor(item.confidence);
+    const level = getConfidenceLevel(item.confidence);
 
     return (
         <div className="rounded-lg border p-3 space-y-2">
             <div className="flex justify-between items-center">
                 <p className="font-medium">{item.topic}</p>
                 <span className="text-sm text-muted-foreground">
-                    {percent}%
+                    {level.label}
                 </span>
             </div>
 
             <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                    className={`h-full transition-all duration-300 ${color}`}
+                    className={`h-full transition-all ${level.color}`}
                     style={{width: `${percent}%`}}
                 />
+            </div>
+
+            <div className="text-xs text-muted-foreground text-right">
+                {percent}%
             </div>
         </div>
     );
