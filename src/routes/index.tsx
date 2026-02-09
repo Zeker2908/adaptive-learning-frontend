@@ -12,6 +12,7 @@ import ForgotPasswordPage from '@/pages/ForgotPassword';
 import {ProtectedRoute} from './ProtectedRoute';
 import {PublicRoute} from './PublicRoute';
 import RootRedirect from "@/routes/RootRedirect.tsx";
+import {ProfilePage} from "@/pages/Profile.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -37,12 +38,17 @@ export const router = createBrowserRouter([
     },
 
     {
-        path: '/dashboard',
-        element: (
-            <ProtectedRoute>
-                <DashboardPage/>
-            </ProtectedRoute>
-        ),
+        element: <ProtectedRoute/>,
+        children: [
+            {
+                path: '/dashboard',
+                element: <DashboardPage/>
+            },
+            {
+                path: '/profile',
+                element: <ProfilePage/>
+            },
+        ]
     },
 
     {

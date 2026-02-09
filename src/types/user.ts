@@ -1,11 +1,16 @@
 // types/user.ts
 
-export interface UserResponse{
+export interface UserUpdateRequest {
+    firstName: string;
+    lastName?: string;
+}
+
+export interface UserResponse {
     id: string;
     email: string;
     firstName: string;
     lastName: string;
     role: string;
-    isLocalUser: boolean;
-    isOAuthUser: boolean;
+    localUser: boolean;
+    oauthUser: boolean;
 }

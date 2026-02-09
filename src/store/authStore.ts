@@ -2,6 +2,7 @@
 import {create} from 'zustand';
 import {persist} from 'zustand/middleware';
 import {authService} from '@/services/authService';
+import {useUserStore} from './userStore';
 import type {ConfirmationEmailRequest, LoginRequest} from '@/types/auth';
 
 interface AuthState {
@@ -34,18 +35,23 @@ export const useAuthStore = create<AuthState>()(
             logout: () => {
                 authService.logout().finally(() => {
                     set({token: null, isAuthenticated: false});
+                    useUserStore.getState().clearUser();
                 });
             },
 
             logoutAll: () => {
                 authService.logoutAll().finally(() => {
                     set({token: null, isAuthenticated: false});
+                    useUserStore.getState().clearUser();
                 });
             },
 
             setToken: (token) => set({token, isAuthenticated: true}),
 
-            clearToken: () => set({token: null, isAuthenticated: false}),
+            clearToken: () => {
+                set({token: null, isAuthenticated: false})
+                useUserStore.getState().clearUser();
+            },
         }),
         {
             name: 'auth-storage',

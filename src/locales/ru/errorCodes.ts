@@ -18,7 +18,7 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
     USER_ALREADY_PASSWORD_BOUND: 'Пароль уже установлен',
     USER_ALREADY_ADMIN: 'Пользователь уже является администратором',
     LOCAL_AUTH_NOT_FOUND: 'Локальная авторизация не найдена',
-    ACCOUNT_BLOCKED: 'Аккаунт не активирован',
+    ACCOUNT_BLOCKED: 'Ваш аккаунт не активен',
     EMAIL_TOKEN_EXPIRED: 'Срок действия ссылки истёк',
     INVALID_EMAIL_TOKEN: 'Недействительная ссылка',
 

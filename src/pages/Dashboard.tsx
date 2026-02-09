@@ -10,7 +10,7 @@ import {DashboardHeader} from '@/components/dashboard/DashboardHeader';
 import {UserInfoCard} from '@/components/dashboard/UserInfoCard';
 import {ActivityChartCard} from '@/components/dashboard/ActivityChartCard';
 import {ProgressCard} from '@/components/dashboard/ProgressCard';
-import {DashboardLayout} from "@/components/layout/DashboardLayout.tsx";
+import {RootLayout} from "@/components/layout/RootLayout.tsx";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -75,7 +75,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <DashboardLayout>
+        <RootLayout>
             <div className="max-w-6xl mx-auto space-y-8">
                 <DashboardHeader firstName={user?.firstName}/>
 
@@ -92,6 +92,6 @@ export default function DashboardPage() {
                     <ActivityChartCard data={activity}/>
                 </div>
             </div>
-        </DashboardLayout>
+        </RootLayout>
     );
 }

@@ -1,4 +1,4 @@
-// src/components/layout/AppSidebar.tsx
+// /components/layout/AppSidebar.tsx
 import {
     Sidebar,
     SidebarContent,

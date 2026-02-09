@@ -21,12 +21,27 @@ export interface RegisterRequest {
     password: string;
 }
 
-export interface ResetPasswordFormValues{
+export interface PasswordFormValues {
     password: string;
     confirmPassword: string;
 }
 
-export interface ResetPasswordRequest{
+export interface BindPasswordRequest {
+    password: string;
+}
+
+export interface ChangePasswordRequest {
+    oldPassword: string;
+    newPassword: string;
+}
+
+export interface ChangePasswordFormValues {
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+export interface ResetPasswordRequest {
     token: string;
     password: string;
 }

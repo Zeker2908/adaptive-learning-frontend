@@ -9,7 +9,7 @@ import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/
 import {useError} from '@/hooks/useError';
 import {toast} from 'sonner';
 import {Eye, EyeOff} from 'lucide-react';
-import type {ResetPasswordFormValues, ResetPasswordRequest} from '@/types/auth';
+import type {PasswordFormValues, ResetPasswordRequest} from '@/types/auth';
 import {authService} from "@/services/authService.ts";
 
 const resetSchema = z.object({
@@ -35,7 +35,7 @@ export function ResetPassword({token, onSuccess}: ResetPasswordProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const form = useForm<ResetPasswordFormValues>({
+    const form = useForm<PasswordFormValues>({
         resolver: zodResolver(resetSchema),
         defaultValues: {
             password: '',
@@ -43,7 +43,7 @@ export function ResetPassword({token, onSuccess}: ResetPasswordProps) {
         },
     });
 
-    const onSubmit = async (data: ResetPasswordFormValues) => {
+    const onSubmit = async (data: PasswordFormValues) => {
         try {
             setIsLoading(true);
 
