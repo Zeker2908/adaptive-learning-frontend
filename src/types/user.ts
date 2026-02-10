@@ -13,4 +13,5 @@ export interface UserResponse {
     role: string;
     localUser: boolean;
     oauthUser: boolean;
+    userBlocked: boolean;
 }

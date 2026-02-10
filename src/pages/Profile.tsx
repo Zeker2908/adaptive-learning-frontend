@@ -22,7 +22,7 @@ export function ProfilePage() {
         try {
             setIsSubmitting(true);
             await userService.updateCurrentUser(data);
-            await fetchUser();
+            await fetchUser(); //TODO: брать пользователя из тела ответа
             toast.success('Профиль успешно обновлен!');
         } catch (error) {
             handleError(error);
@@ -51,7 +51,7 @@ export function ProfilePage() {
         try {
             setIsSubmitting(true);
             await userService.bindPassword(data);
-            await fetchUser();
+            await fetchUser(); //TODO: брать пользователя из тела ответа
             toast.success('Пароль успешно привязан!');
         } catch (error) {
             handleError(error);
