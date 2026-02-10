@@ -1,4 +1,4 @@
-// /components/layout/AppSidebar.tsx
+// components/layout/AppSidebar.tsx
 import {
     Sidebar,
     SidebarContent,
@@ -10,13 +10,14 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import {BookOpen, HelpCircle, Home, LogOut, Play, Settings, Trophy, Users} from "lucide-react";
+import {BookOpen, ChevronDown, ChevronUp, HelpCircle, Home, LogOut, Play, Settings, Trophy, Users,} from "lucide-react";
 import {useNavigate} from "react-router-dom";
 import {Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {useAuthStore} from "@/store/authStore.ts";
 import {useToast} from "@/hooks/useToast.ts";
 import {useUserStore} from '@/store/userStore';
 import logo from '@/assets/logo.svg';
+import {useState} from 'react';
 
 const items = [
     {title: "Главная", url: "/dashboard", icon: Home},
@@ -30,8 +31,19 @@ const items = [
 export function AppSidebar() {
     const navigate = useNavigate();
     const {user} = useUserStore();
-    const {logout} = useAuthStore();
+    const {logout, logoutAll} = useAuthStore();
     const {showSuccessToast} = useToast();
+    const [isLogoutExpanded, setIsLogoutExpanded] = useState(false);
+
+    const handleLogout = () => {
+        logout();
+        setIsLogoutExpanded(false);
+    };
+
+    const handleLogoutAll = () => {
+        logoutAll();
+        setIsLogoutExpanded(false);
+    };
 
     return (
         <Sidebar>
@@ -91,20 +103,41 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
 
-                    {/* Кнопка "Выйти" */}
+                    {/* Развертываемый блок выхода */}
                     <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            onClick={showSuccessToast(
-                                () => logout(),
-                                'Вы успешно вышли из аккаунта'
+                        <div className="space-y-1">
+                            <SidebarMenuButton
+                                onClick={() => setIsLogoutExpanded(!isLogoutExpanded)}
+                                className="w-full flex items-center justify-between gap-3 text-destructive"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <LogOut className="h-5 w-5"/>
+                                    <span>{isLogoutExpanded ? 'Выберите действие' : 'Выйти'}</span>
+                                </div>
+                                {isLogoutExpanded ? (
+                                    <ChevronUp className="h-4 w-4"/>
+                                ) : (
+                                    <ChevronDown className="h-4 w-4"/>
+                                )}
+                            </SidebarMenuButton>
+
+                            {isLogoutExpanded && (
+                                <div className="pl-8 space-y-1">
+                                    <button
+                                        onClick={showSuccessToast(handleLogout,'Вы успешно вышли из аккаунта')}
+                                        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                                    >
+                                        <span>• Текущая сессия</span>
+                                    </button>
+                                    <button
+                                        onClick={showSuccessToast(handleLogoutAll,'Вы успешно вышли из аккаунта на всех устройствах')}
+                                        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-destructive"
+                                    >
+                                        <span>• Все устройства</span>
+                                    </button>
+                                </div>
                             )}
-                        >
-                            <button className="w-full flex items-center gap-3 text-destructive">
-                                <LogOut className="h-5 w-5"/>
-                                <span>Выйти</span>
-                            </button>
-                        </SidebarMenuButton>
+                        </div>
                     </SidebarMenuItem>
 
                     {/* Профиль пользователя */}
