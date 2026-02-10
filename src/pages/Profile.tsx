@@ -13,7 +13,7 @@ import {useAuthStore} from "@/store/authStore.ts";
 
 
 export function ProfilePage() {
-    const {user, fetchUser} = useUserStore();
+    const {user, setUser} = useUserStore();
     const {clearToken} = useAuthStore();
     const {handleError} = useError();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,8 +21,7 @@ export function ProfilePage() {
     const handleUpdateProfile = async (data: UserUpdateRequest) => {
         try {
             setIsSubmitting(true);
-            await userService.updateCurrentUser(data);
-            await fetchUser(); //TODO: брать пользователя из тела ответа
+            setUser(await userService.updateCurrentUser(data));
             toast.success('Профиль успешно обновлен!');
         } catch (error) {
             handleError(error);
@@ -50,8 +49,7 @@ export function ProfilePage() {
     const handleBindPassword = async (data: BindPasswordRequest) => {
         try {
             setIsSubmitting(true);
-            await userService.bindPassword(data);
-            await fetchUser(); //TODO: брать пользователя из тела ответа
+            setUser(await userService.bindPassword(data));
             toast.success('Пароль успешно привязан!');
         } catch (error) {
             handleError(error);

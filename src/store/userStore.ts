@@ -8,6 +8,7 @@ interface UserState {
     user: UserResponse | null;
     loading: boolean;
     fetchUser: () => Promise<void>;
+    setUser: (user: UserResponse) => void;
     clearUser: () => void;
 }
 
@@ -38,6 +39,8 @@ export const useUserStore = create<UserState>()((set) => ({
             throw error;
         }
     },
+
+    setUser: (user: UserResponse) => set({user}),
 
     clearUser: () => set({user: null}),
 }));

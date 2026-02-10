@@ -17,7 +17,7 @@ export const userService = {
         return api.patch('/users/me/password', data);
     },
 
-    async bindPassword(data: BindPasswordRequest): Promise<void> {
+    async bindPassword(data: BindPasswordRequest): Promise<UserResponse> {
         return api.post('/users/me/password/bind', data);
     }
 }
