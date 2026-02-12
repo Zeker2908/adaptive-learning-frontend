@@ -15,6 +15,7 @@ import RootRedirect from "@/routes/RootRedirect.tsx";
 import {ProfilePage} from "@/pages/Profile.tsx";
 import {AdminRoute} from "@/routes/AdminRoute.tsx";
 import AdminUsersPage from "@/pages/AdminUsersPage.tsx";
+import UserViewPage from "@/pages/UserViewPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
                 element: <AdminRoute />,
                 children: [
                     { path: '/admin/users', element: <AdminUsersPage /> },
+                    { path: '/admin/users/:userId', element: <UserViewPage /> },
                 ]
             }
         ]

@@ -9,6 +9,7 @@ import type {AdminUserResponse} from "@/types/user.ts";
 import type {Page} from "@/types/page.ts";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
 import {Button} from "@/components/ui/button.tsx";
+import {useNavigate} from "react-router-dom";
 
 interface UsersTableProps {
     users: Page<AdminUserResponse>;
@@ -32,6 +33,7 @@ export function UsersTable({
                                onPageChange,
                            }: UsersTableProps) {
     const {handleError} = useError();
+    const navigate = useNavigate();
 
     const handleBlockUser = async (userId: string, isBlocked: boolean) => {
         try {
@@ -107,7 +109,11 @@ export function UsersTable({
                     {users.content.map((user) => (
                         <TableRow
                             key={user.id}
-                            className={selectedUserId === user.id ? 'bg-accent' : ''}
+                            className={`
+                  ${selectedUserId === user.id ? 'bg-accent' : ''}
+                  hover:bg-muted/50 cursor-pointer transition-colors
+                `}
+                            onClick={() => navigate(`/admin/users/${user.id}`)}
                         >
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-2">

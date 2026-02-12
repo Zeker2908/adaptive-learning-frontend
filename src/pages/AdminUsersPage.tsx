@@ -1,15 +1,13 @@
 // pages/admin/AdminUsersPage.tsx
-import {useCallback, useEffect, useState} from 'react';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
-import {adminService} from '@/services/adminService';
-import {useError} from '@/hooks/useError';
-import {toast} from 'sonner';
-import {Ban, Loader2, Search, ShieldCheck, User, Users} from 'lucide-react';
-import {RootLayout} from '@/components/layout/RootLayout';
-import {SmartUserSearch} from '@/components/admin/SmartUserSearch';
-import {UsersTable} from '@/components/admin/UsersTable';
-import type {AdminUserResponse} from "@/types/user.ts";
+import { useCallback, useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { adminService } from '@/services/adminService';
+import { useError } from '@/hooks/useError';
+import { Users, Search, Filter } from 'lucide-react';
+import { RootLayout } from '@/components/layout/RootLayout';
+import { SmartUserSearch } from '@/components/admin/SmartUserSearch';
+import { UsersTable } from '@/components/admin/UsersTable';
+import type { AdminUserResponse } from '@/types/user';
 import type {Page} from "@/types/page.ts";
 
 export default function AdminUsersPage() {
@@ -26,7 +24,7 @@ export default function AdminUsersPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
-    const {handleError} = useError();
+    const { handleError } = useError();
     const [sortField, setSortField] = useState<string>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [page, setPage] = useState(0);
@@ -60,6 +58,10 @@ export default function AdminUsersPage() {
 
     const handleUserSelect = (user: AdminUserResponse | null) => {
         setSelectedUser(user);
+        if (user) {
+            // Автоматически переходим на страницу пользователя
+            window.location.href = `/admin/users/${user.id}`;
+        }
     };
 
     const handleActionComplete = () => {
@@ -80,7 +82,7 @@ export default function AdminUsersPage() {
             <div className="max-w-7xl mx-auto space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <Users className="h-8 w-8"/>
+                        <Users className="h-8 w-8" />
                         Управление пользователями
                     </h1>
                     <p className="text-muted-foreground mt-1">
@@ -92,7 +94,7 @@ export default function AdminUsersPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Search className="h-5 w-5"/>
+                            <Search className="h-5 w-5" />
                             Быстрый поиск пользователя
                         </CardTitle>
                         <CardDescription>
@@ -108,111 +110,70 @@ export default function AdminUsersPage() {
                     </CardContent>
                 </Card>
 
-                {/* Информация о выбранном пользователе */}
-                {selectedUser && (
-                    <Card className="border-l-4 border-l-primary">
-                        <CardHeader>
-                            <CardTitle className="text-xl">Выбранный пользователь</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Email</p>
-                                    <p className="font-medium">{selectedUser.email}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Имя</p>
-                                    <p className="font-medium">
-                                        {selectedUser.firstName} {selectedUser.lastName}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">ID</p>
-                                    <p className="font-medium font-mono text-xs break-all">
-                                        {selectedUser.id}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Роль</p>
-                                    <div className="flex items-center gap-2">
-                                        {selectedUser.role === 'ADMIN' ? (
-                                            <ShieldCheck className="h-4 w-4 text-blue-500"/>
-                                        ) : (
-                                            <User className="h-4 w-4 text-muted-foreground"/>
-                                        )}
-                                        <span className="font-medium">
-                      {selectedUser.role === 'ADMIN' ? 'Администратор' : 'Пользователь'}
-                    </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Статус</p>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Статус</p>
-                                        <div className="flex items-center gap-2">
-                                            {selectedUser.userBlocked ? (
-                                                <>
-                                                    <Ban className="h-4 w-4 text-red-500"/>
-                                                    <span className="font-medium text-red-600">Заблокирован</span>
-                                                </>
-                                            ) : !selectedUser.enabled ? (
-                                                <>
-                                                    <User className="h-4 w-4 text-yellow-500"/>
-                                                    <span className="font-medium text-yellow-600">Не активирован</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="w-2 h-2 rounded-full bg-green-500"/>
-                                                    <span className="font-medium text-green-600">Активен</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Регистрация</p>
-                                        <p className="font-medium">
-                                            {new Date(selectedUser.createdAt).toLocaleDateString('ru-RU')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 flex gap-2">
-                                <Button
-                                    onClick={() => setSelectedUser(null)}
-                                    variant="outline"
-                                >
-                                    Очистить выбор
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        toast.info('Быстрые действия можно добавить здесь');
+                {/* Фильтры и сортировка */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Filter className="h-5 w-5" />
+                            Фильтры и сортировка
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center gap-4">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Сортировка:</p>
+                                <select
+                                    value={`${sortField},${sortDirection}`}
+                                    onChange={(e) => {
+                                        const [field, direction] = e.target.value.split(',');
+                                        setSortField(field);
+                                        setSortDirection(direction as 'asc' | 'desc');
                                     }}
-                                    variant="secondary"
+                                    className="border rounded px-3 py-2"
                                 >
-                                    Действия
-                                </Button>
+                                    <option value="createdAt,desc">По дате регистрации (новые)</option>
+                                    <option value="createdAt,asc">По дате регистрации (старые)</option>
+                                    <option value="email,asc">По email (А-Я)</option>
+                                    <option value="email,desc">По email (Я-А)</option>
+                                    <option value="firstName,asc">По имени (А-Я)</option>
+                                    <option value="firstName,desc">По имени (Я-А)</option>
+                                </select>
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                            <div>
+                                <p className="text-sm text-muted-foreground">Показать:</p>
+                                <select
+                                    value={size}
+                                    onChange={() => {
+                                        setPage(0);
+                                        // size уже фиксирован в 50, но можно сделать динамическим
+                                    }}
+                                    className="border rounded px-3 py-2"
+                                >
+                                    <option value="20">20 пользователей</option>
+                                    <option value="50" selected>50 пользователей</option>
+                                    <option value="100">100 пользователей</option>
+                                </select>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Список всех пользователей */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Users className="h-5 w-5"/>
+                            <Users className="h-5 w-5" />
                             Все пользователи
                         </CardTitle>
                         <CardDescription>
-                            Полный список пользователей с пагинацией и возможностью управления
+                            Кликните на пользователя, чтобы просмотреть его профиль и статистику
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
                             <div className="flex justify-center p-12">
                                 <div className="flex flex-col items-center gap-3">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
                                     <p className="text-muted-foreground">Загрузка пользователей...</p>
                                 </div>
                             </div>
