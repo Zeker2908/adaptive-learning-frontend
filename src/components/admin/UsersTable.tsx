@@ -1,21 +1,36 @@
 // components/admin/UsersTable.tsx
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
-import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
-import {Ban, ShieldCheck, User, UserCheck} from 'lucide-react';
+import {ArrowDown, ArrowUp, Ban, MoreVertical, ShieldCheck, User, UserCheck} from 'lucide-react';
 import {adminService} from '@/services/adminService';
 import {useError} from '@/hooks/useError';
 import {toast} from 'sonner';
 import type {AdminUserResponse} from "@/types/user.ts";
 import type {Page} from "@/types/page.ts";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
+import {Button} from "@/components/ui/button.tsx";
 
 interface UsersTableProps {
     users: Page<AdminUserResponse>;
     onActionComplete: () => void;
     selectedUserId?: string;
+    sortField: string;
+    sortDirection: 'asc' | 'desc';
+    onSort: (field: string) => void;
+    page: number;
+    onPageChange: (page: number) => void;
 }
 
-export function UsersTable({users, onActionComplete, selectedUserId}: UsersTableProps) {
+export function UsersTable({
+                               users,
+                               onActionComplete,
+                               selectedUserId,
+                               sortField,
+                               sortDirection,
+                               onSort,
+                               page,
+                               onPageChange,
+                           }: UsersTableProps) {
     const {handleError} = useError();
 
     const handleBlockUser = async (userId: string, isBlocked: boolean) => {
@@ -43,16 +58,48 @@ export function UsersTable({users, onActionComplete, selectedUserId}: UsersTable
         }
     };
 
+    const renderSortIcon = (field: string) => {
+        if (sortField !== field) return null;
+
+        return sortDirection === 'asc'
+            ? <ArrowUp className="h-3 w-3"/>
+            : <ArrowDown className="h-3 w-3"/>;
+    };
+
     return (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Пользователь</TableHead>
-                        <TableHead>Email</TableHead>
+                        <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => onSort('firstName')}
+                        >
+                            <div className="flex items-center gap-1">
+                                Пользователь
+                                {renderSortIcon('firstName')}
+                            </div>
+                        </TableHead>
+                        <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => onSort('email')}
+                        >
+                            <div className="flex items-center gap-1">
+                                Email
+                                {renderSortIcon('email')}
+                            </div>
+                        </TableHead>
                         <TableHead>Роль</TableHead>
                         <TableHead>Статус</TableHead>
-                        <TableHead>Регистрация</TableHead>
+                        <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => onSort('createdAt')}
+                        >
+                            <div className="flex items-center gap-1">
+                                Регистрация
+                                {renderSortIcon('createdAt')}
+                            </div>
+                        </TableHead>
                         <TableHead>Действия</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -69,7 +116,15 @@ export function UsersTable({users, onActionComplete, selectedUserId}: UsersTable
                                     )}
                                     <div>
                                         <div>{user.firstName} {user.lastName}</div>
-                                        <div className="text-xs text-muted-foreground font-mono">
+                                        <div
+                                            className="text-xs text-muted-foreground font-mono cursor-pointer hover:underline"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(user.id)
+                                                    .then(() => toast.success('ID скопирован!'))
+                                                    .catch(() => toast.error('Не удалось скопировать'));
+                                            }}
+                                            title="Кликните, чтобы скопировать ID"
+                                        >
                                             {user.id.substring(0, 8)}...
                                         </div>
                                     </div>
@@ -118,40 +173,72 @@ export function UsersTable({users, onActionComplete, selectedUserId}: UsersTable
                                 })}
                             </TableCell>
                             <TableCell>
-                                <div className="flex gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant={user.userBlocked ? "outline" : "destructive"}
-                                        className="flex items-center gap-1 hover:scale-105 transition-transform"
-                                        onClick={() => handleBlockUser(user.id, user.userBlocked)}
-                                    >
-                                        {user.userBlocked ? (
-                                            <>
-                                                <UserCheck className="h-3 w-3"/> Разблокировать
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Ban className="h-3 w-3"/> Заблокировать
-                                            </>
-                                        )}
-                                    </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            className="p-1 flex items-center justify-center hover:bg-muted rounded-full">
+                                            <MoreVertical className="h-4 w-4 text-muted-foreground"/>
+                                        </button>
+                                    </DropdownMenuTrigger>
 
-                                    {user.role !== "ADMIN" && (
-                                        <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            className="flex items-center gap-1 hover:scale-105 transition-transform"
-                                            onClick={() => handleGrantAdmin(user.id)}
-                                        >
-                                            <ShieldCheck className="h-3 w-3"/> Админ
-                                        </Button>
-                                    )}
-                                </div>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                        {user.userBlocked ? (
+                                            <DropdownMenuItem
+                                                onClick={() => handleBlockUser(user.id, user.userBlocked)}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <UserCheck className="h-4 w-4"/> Разблокировать
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            <DropdownMenuItem
+                                                onClick={() => handleBlockUser(user.id, user.userBlocked)}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <Ban className="h-4 w-4"/> Заблокировать
+                                            </DropdownMenuItem>
+                                        )}
+
+                                        {user.role !== 'ADMIN' && (
+                                            <DropdownMenuItem
+                                                onClick={() => handleGrantAdmin(user.id)}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <ShieldCheck className="h-4 w-4"/> Назначить админом
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+                <div className="text-sm text-muted-foreground">
+                    Страница {users.number + 1} из {users.totalPages}
+                    {' '}• Всего пользователей: {users.totalElements}
+                </div>
+
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={users.first}
+                        onClick={() => onPageChange(page - 1)}
+                    >
+                        Назад
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={users.last}
+                        onClick={() => onPageChange(page + 1)}
+                    >
+                        Вперёд
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 }

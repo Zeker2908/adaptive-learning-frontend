@@ -1,4 +1,4 @@
-// pages/admin/UsersPage.tsx
+// pages/admin/AdminUsersPage.tsx
 import {useCallback, useEffect, useState} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
@@ -27,18 +27,36 @@ export default function AdminUsersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
     const {handleError} = useError();
+    const [sortField, setSortField] = useState<string>('createdAt');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [page, setPage] = useState(0);
+    const size = 50;
 
     const loadUsers = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await adminService.getUsers(0, 20);
+            const response = await adminService.getUsers(
+                page,
+                size,
+                sortField,
+                sortDirection
+            );
             setUsers(response);
         } catch (error) {
             handleError(error);
         } finally {
             setIsLoading(false);
         }
-    }, [handleError]);
+    }, [handleError, page, size, sortField, sortDirection]);
+
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
 
     const handleUserSelect = (user: AdminUserResponse | null) => {
         setSelectedUser(user);
@@ -203,6 +221,11 @@ export default function AdminUsersPage() {
                                 users={users}
                                 onActionComplete={handleActionComplete}
                                 selectedUserId={selectedUser?.id}
+                                sortField={sortField}
+                                sortDirection={sortDirection}
+                                onSort={handleSort}
+                                page={page}
+                                onPageChange={setPage}
                             />
                         )}
                     </CardContent>

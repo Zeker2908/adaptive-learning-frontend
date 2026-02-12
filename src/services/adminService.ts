@@ -8,9 +8,15 @@ export const adminService = {
 
     async getUsers(
         page: number,
-        size: number = 20
+        size: number = 20,
+        sortField?: string,
+        sortDirection: 'asc' | 'desc' = 'asc'
     ): Promise<Page<AdminUserResponse>> {
-        return api.get(`/admin/users?page=${page}&size=${size}`);
+        let url = `/admin/users?page=${page}&size=${size}`;
+        if (sortField) {
+            url += `&sort=${sortField},${sortDirection}`;
+        }
+        return api.get(url);
     },
 
     async searchUsersByEmail(prefix: string, limit: number = 10): Promise<AdminUserResponse[]> {

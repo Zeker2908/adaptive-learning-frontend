@@ -14,7 +14,7 @@ import {PublicRoute} from './PublicRoute';
 import RootRedirect from "@/routes/RootRedirect.tsx";
 import {ProfilePage} from "@/pages/Profile.tsx";
 import {AdminRoute} from "@/routes/AdminRoute.tsx";
-import AdminUsersPage from "@/pages/UsersPage.tsx";
+import AdminUsersPage from "@/pages/AdminUsersPage.tsx";
 
 export const router = createBrowserRouter([
     {
