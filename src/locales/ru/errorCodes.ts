@@ -22,6 +22,7 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
     ACCOUNT_DISABLED: 'Ваш аккаунт не активирован. Пожалуйста, проверьте почтовый ящик или отправьте письмо повторно',
     EMAIL_TOKEN_EXPIRED: 'Срок действия ссылки истёк',
     INVALID_EMAIL_TOKEN: 'Недействительная ссылка',
+    SELF_BLOCK_FORBIDDEN: 'Вы не можете заблокировать свой собственный аккаунт',
 
     // OAuth
     O_AUTH2_PROVIDER: 'Ошибка авторизации через провайдера',

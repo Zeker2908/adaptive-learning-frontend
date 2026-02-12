@@ -6,15 +6,20 @@ import type {ApiError} from "@/types/auth.ts";
 
 interface UserState {
     user: UserResponse | null;
+    isAdmin: () => boolean;
     loading: boolean;
     fetchUser: () => Promise<void>;
     setUser: (user: UserResponse) => void;
     clearUser: () => void;
 }
 
-export const useUserStore = create<UserState>()((set) => ({
+export const useUserStore = create<UserState>()((set, get) => ({  // ← Добавили get
     user: null,
     loading: false,
+
+    isAdmin: () => {
+        return get().user?.role === 'ADMIN';
+    },
 
     fetchUser: async () => {
         set({loading: true});

@@ -30,7 +30,7 @@ const items = [
 
 export function AppSidebar() {
     const navigate = useNavigate();
-    const {user} = useUserStore();
+    const {user, isAdmin} = useUserStore();
     const {logout, logoutAll} = useAuthStore();
     const {showSuccessToast} = useToast();
     const [isLogoutExpanded, setIsLogoutExpanded] = useState(false);
@@ -86,6 +86,47 @@ export function AppSidebar() {
                         ))}
                     </SidebarMenu>
                 </SidebarGroup>
+
+                {/* Админка - показываем только для администраторов */}
+                {isAdmin() && (
+                    <SidebarGroup>
+                        <div className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/70">
+                            Администрирование
+                        </div>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={window.location.pathname.startsWith('/admin/users')}
+                                    className="text-primary"
+                                >
+                                    <button
+                                        onClick={() => navigate('/admin/users')}
+                                        className="w-full flex items-center gap-3"
+                                    >
+                                        <Users className="h-5 w-5"/>
+                                        <span>Управление пользователями</span>
+                                    </button>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={window.location.pathname.startsWith('/admin/tasks')}
+                                    className="text-primary"
+                                >
+                                    <button
+                                        onClick={() => navigate('/admin/tasks')}
+                                        className="w-full flex items-center gap-3"
+                                    >
+                                        <BookOpen className="h-5 w-5"/>
+                                        <span>Управление задачами</span>
+                                    </button>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroup>
+                )}
             </SidebarContent>
 
             <SidebarFooter>
@@ -124,13 +165,13 @@ export function AppSidebar() {
                             {isLogoutExpanded && (
                                 <div className="pl-8 space-y-1">
                                     <button
-                                        onClick={showSuccessToast(handleLogout,'Вы успешно вышли из аккаунта')}
+                                        onClick={showSuccessToast(handleLogout, 'Вы успешно вышли из аккаунта')}
                                         className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
                                     >
                                         <span>• Текущая сессия</span>
                                     </button>
                                     <button
-                                        onClick={showSuccessToast(handleLogoutAll,'Вы успешно вышли из аккаунта на всех устройствах')}
+                                        onClick={showSuccessToast(handleLogoutAll, 'Вы успешно вышли из аккаунта на всех устройствах')}
                                         className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-destructive"
                                     >
                                         <span>• Все устройства</span>

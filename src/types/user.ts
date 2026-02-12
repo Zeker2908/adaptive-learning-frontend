@@ -15,3 +15,8 @@ export interface UserResponse {
     oauthUser: boolean;
     userBlocked: boolean;
 }
+
+export interface AdminUserResponse extends UserResponse {
+    createdAt: string;
+    enabled: boolean;
+}
