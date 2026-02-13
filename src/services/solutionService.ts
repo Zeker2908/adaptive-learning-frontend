@@ -1,6 +1,6 @@
 // services/solutionService.ts
 
-import type {DailyActivityResponse, UserProgressResponse} from "@/types/solution.ts";
+import type {DailyActivityResponse, TaskStatisticsResponse, UserProgressResponse} from "@/types/solution.ts";
 import {api} from "@/services/api.ts";
 import type {Page} from "@/types/page.ts";
 
@@ -18,6 +18,10 @@ export const solutionService = {
         return api.get(
             `/solutions/user/progress?page=${page}&size=${size}`
         );
+    },
+
+    async getUserStatistics(): Promise<TaskStatisticsResponse> {
+        return api.get('/solutions/user/statistics');
     },
 
     // === админский функционал ===
@@ -38,5 +42,9 @@ export const solutionService = {
         return api.get(
             `/admin/solutions/user/activity/${userId}?days=${days}`
         );
+    },
+
+    async getUserStatisticsByAdmin(userId: string): Promise<TaskStatisticsResponse> {
+        return api.get(`/admin/solutions/user/statistics/${userId}`);
     },
 };

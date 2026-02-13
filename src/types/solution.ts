@@ -10,3 +10,11 @@ export interface UserProgressResponse {
     topic: string;
     confidence: number;
 }
+
+export interface TaskStatisticsResponse {
+    totalSolutions: number;
+    successfulSolutions: number;
+    successRate: number;
+    averageConfidence: number;
+    weakestTopics: string[];
+}

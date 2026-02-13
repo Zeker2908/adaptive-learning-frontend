@@ -1,13 +1,12 @@
 // pages/admin/AdminUsersPage.tsx
-import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { adminService } from '@/services/adminService';
-import { useError } from '@/hooks/useError';
-import { Users, Search, Filter } from 'lucide-react';
-import { RootLayout } from '@/components/layout/RootLayout';
-import { SmartUserSearch } from '@/components/admin/SmartUserSearch';
-import { UsersTable } from '@/components/admin/UsersTable';
-import type { AdminUserResponse } from '@/types/user';
+import {useCallback, useEffect, useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {adminService} from '@/services/adminService';
+import {useError} from '@/hooks/useError';
+import {Users} from 'lucide-react';
+import {RootLayout} from '@/components/layout/RootLayout';
+import {UsersTable} from '@/components/admin/UsersTable';
+import type {AdminUserResponse} from '@/types/user';
 import type {Page} from "@/types/page.ts";
 
 export default function AdminUsersPage() {
@@ -24,7 +23,7 @@ export default function AdminUsersPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
-    const { handleError } = useError();
+    const {handleError} = useError();
     const [sortField, setSortField] = useState<string>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [page, setPage] = useState(0);
@@ -56,14 +55,6 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleUserSelect = (user: AdminUserResponse | null) => {
-        setSelectedUser(user);
-        if (user) {
-            // Автоматически переходим на страницу пользователя
-            window.location.href = `/admin/users/${user.id}`;
-        }
-    };
-
     const handleActionComplete = () => {
         loadUsers();
         if (selectedUser) {
@@ -82,7 +73,7 @@ export default function AdminUsersPage() {
             <div className="max-w-7xl mx-auto space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <Users className="h-8 w-8" />
+                        <Users className="h-8 w-8"/>
                         Управление пользователями
                     </h1>
                     <p className="text-muted-foreground mt-1">
@@ -90,79 +81,11 @@ export default function AdminUsersPage() {
                     </p>
                 </div>
 
-                {/* Умный поиск */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Search className="h-5 w-5" />
-                            Быстрый поиск пользователя
-                        </CardTitle>
-                        <CardDescription>
-                            Введите часть email для автодополнения или полный email/ID для точного поиска
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <SmartUserSearch
-                            onUserSelect={handleUserSelect}
-                            value={selectedUser}
-                            placeholder="Начните вводить email или введите полный ID..."
-                        />
-                    </CardContent>
-                </Card>
-
-                {/* Фильтры и сортировка */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Filter className="h-5 w-5" />
-                            Фильтры и сортировка
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center gap-4">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Сортировка:</p>
-                                <select
-                                    value={`${sortField},${sortDirection}`}
-                                    onChange={(e) => {
-                                        const [field, direction] = e.target.value.split(',');
-                                        setSortField(field);
-                                        setSortDirection(direction as 'asc' | 'desc');
-                                    }}
-                                    className="border rounded px-3 py-2"
-                                >
-                                    <option value="createdAt,desc">По дате регистрации (новые)</option>
-                                    <option value="createdAt,asc">По дате регистрации (старые)</option>
-                                    <option value="email,asc">По email (А-Я)</option>
-                                    <option value="email,desc">По email (Я-А)</option>
-                                    <option value="firstName,asc">По имени (А-Я)</option>
-                                    <option value="firstName,desc">По имени (Я-А)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Показать:</p>
-                                <select
-                                    value={size}
-                                    onChange={() => {
-                                        setPage(0);
-                                        // size уже фиксирован в 50, но можно сделать динамическим
-                                    }}
-                                    className="border rounded px-3 py-2"
-                                >
-                                    <option value="20">20 пользователей</option>
-                                    <option value="50" selected>50 пользователей</option>
-                                    <option value="100">100 пользователей</option>
-                                </select>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
                 {/* Список всех пользователей */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Users className="h-5 w-5" />
+                            <Users className="h-5 w-5"/>
                             Все пользователи
                         </CardTitle>
                         <CardDescription>
@@ -173,7 +96,7 @@ export default function AdminUsersPage() {
                         {isLoading ? (
                             <div className="flex justify-center p-12">
                                 <div className="flex flex-col items-center gap-3">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
                                     <p className="text-muted-foreground">Загрузка пользователей...</p>
                                 </div>
                             </div>

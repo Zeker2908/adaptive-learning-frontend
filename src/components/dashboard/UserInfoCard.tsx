@@ -1,15 +1,13 @@
 // components/dashboard/UserInfoCard.tsx
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
 import type {UserResponse} from '@/types/user';
 import {useToast} from "@/hooks/useToast.ts";
 
 interface Props {
     user: UserResponse | null;
-    onEdit: () => void;
 }
 
-export function UserInfoCard({user, onEdit}: Props) {
+export function UserInfoCard({user}: Props) {
     const {showSuccessToast} = useToast();
     const copyIdToClipboard = async () => {
         if (!user?.id) return;
@@ -64,10 +62,6 @@ export function UserInfoCard({user, onEdit}: Props) {
                         </div>
                     </div>
                 </div>
-
-                <Button variant="outline" onClick={onEdit}>
-                    Редактировать профиль
-                </Button>
             </CardContent>
         </Card>
     );

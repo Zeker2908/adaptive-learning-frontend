@@ -11,7 +11,6 @@ import type {BindPasswordRequest, ChangePasswordRequest} from "@/types/auth.ts";
 import type {UserUpdateRequest} from "@/types/user.ts";
 import {useAuthStore} from "@/store/authStore.ts";
 
-
 export function ProfilePage() {
     const {user, setUser} = useUserStore();
     const {clearToken} = useAuthStore();
@@ -70,26 +69,24 @@ export function ProfilePage() {
 
     return (
         <RootLayout>
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-2xl mx-auto space-y-8">
                 <div>
                     <h1 className="text-2xl font-bold">Редактирование профиля</h1>
                     <p className="text-muted-foreground">Обновите информацию о вашем аккаунте</p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <PersonalInfoForm
-                        user={user}
-                        onSubmit={handleUpdateProfile}
-                        isSubmitting={isSubmitting}
-                    />
+                <PersonalInfoForm
+                    user={user}
+                    onSubmit={handleUpdateProfile}
+                    isSubmitting={isSubmitting}
+                />
 
-                    <PasswordManagementForm
-                        user={user}
-                        onChangePassword={handleChangePassword}
-                        onBindPassword={handleBindPassword}
-                        isSubmitting={isSubmitting}
-                    />
-                </div>
+                <PasswordManagementForm
+                    user={user}
+                    onChangePassword={handleChangePassword}
+                    onBindPassword={handleBindPassword}
+                    isSubmitting={isSubmitting}
+                />
             </div>
         </RootLayout>
     );

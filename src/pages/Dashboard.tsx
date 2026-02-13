@@ -1,19 +1,17 @@
 // pages/DashboardPage.tsx
 import {useCallback, useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {useUserStore} from '@/store/userStore';
 import {solutionService} from '@/services/solutionService';
 import {useError} from '@/hooks/useError';
-import type {DailyActivityResponse, UserProgressResponse,} from '@/types/solution';
+import type {DailyActivityResponse, TaskStatisticsResponse, UserProgressResponse,} from '@/types/solution';
 
 import {DashboardHeader} from '@/components/dashboard/DashboardHeader';
-import {UserInfoCard} from '@/components/dashboard/UserInfoCard';
 import {ActivityChartCard} from '@/components/dashboard/ActivityChartCard';
 import {ProgressCard} from '@/components/dashboard/ProgressCard';
 import {RootLayout} from "@/components/layout/RootLayout.tsx";
+import {UserStatisticsCard} from "@/components/dashboard/UserStatisticsCard.tsx";
 
 export default function DashboardPage() {
-    const navigate = useNavigate();
     const {handleError} = useError();
     const {user} = useUserStore();
 
@@ -25,12 +23,16 @@ export default function DashboardPage() {
     const [progressPage, setProgressPage] = useState(0);
     const [progressLast, setProgressLast] = useState(false);
     const [progressLoading, setProgressLoading] = useState(false);
+    const [statistics, setStatistics] =
+        useState<TaskStatisticsResponse | null>(null);
 
     useEffect(() => {
         const load = async () => {
             try {
                 const activityData = await solutionService.getDailyActivities();
+                const statisticData = await solutionService.getUserStatistics();
                 setActivity(activityData);
+                setStatistics(statisticData);
             } catch (e) {
                 handleError(e);
             } finally {
@@ -80,7 +82,10 @@ export default function DashboardPage() {
                 <DashboardHeader firstName={user?.firstName}/>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <UserInfoCard user={user} onEdit={() => navigate('/profile')}/>
+                    <UserStatisticsCard
+                        statistics={statistics}
+                        className="lg:col-span-2"
+                    />
                     <ProgressCard
                         data={progress}
                         isLoading={progressLoading}

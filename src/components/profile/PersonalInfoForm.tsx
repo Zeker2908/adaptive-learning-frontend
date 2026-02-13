@@ -37,6 +37,19 @@ export function PersonalInfoForm({user, onSubmit, isSubmitting}: PersonalInfoFor
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        {/* Email — только для чтения */}
+                        <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input
+                                    value={user.email || '-'}
+                                    disabled
+                                    readOnly
+                                    className="bg-muted"
+                                />
+                            </FormControl>
+                        </FormItem>
+
                         <FormField
                             control={form.control}
                             name="firstName"

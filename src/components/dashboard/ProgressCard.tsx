@@ -46,7 +46,7 @@ export function ProgressCard({
     }, [onLoadMore, isLast, hasError]);
 
     return (
-        <Card className="h-75 flex flex-col">
+        <Card className="h-80 flex flex-col">
             <CardHeader>
                 <CardTitle>Прогресс</CardTitle>
                 <CardDescription>

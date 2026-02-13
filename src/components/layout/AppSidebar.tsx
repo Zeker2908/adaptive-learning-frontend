@@ -10,7 +10,7 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import {BookOpen, ChevronDown, ChevronUp, HelpCircle, Home, LogOut, Play, Settings, Trophy, Users,} from "lucide-react";
+import {BookOpen, ChevronDown, ChevronUp, HelpCircle, Home, LogOut, Play, Trophy, Users,} from "lucide-react";
 import {useNavigate} from "react-router-dom";
 import {Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {useAuthStore} from "@/store/authStore.ts";
@@ -131,19 +131,6 @@ export function AppSidebar() {
 
             <SidebarFooter>
                 <SidebarMenu>
-                    {/* Кнопка "Настройки" */}
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            onClick={() => navigate('/settings')}
-                        >
-                            <button className="w-full flex items-center gap-3">
-                                <Settings className="h-5 w-5"/>
-                                <span>Настройки</span>
-                            </button>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-
                     {/* Развертываемый блок выхода */}
                     <SidebarMenuItem>
                         <div className="space-y-1">
@@ -184,7 +171,10 @@ export function AppSidebar() {
                     {/* Профиль пользователя */}
                     {user && (
                         <SidebarMenuItem>
-                            <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent">
+                            <button
+                                onClick={() => navigate('/profile')}
+                                className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent transition-colors"
+                            >
                                 <Avatar className="h-8 w-8">
                                     <AvatarFallback>
                                         {(user.firstName?.[0] || 'U') + (user.lastName?.[0] || '')}
@@ -195,7 +185,7 @@ export function AppSidebar() {
                                         {user.firstName} {user.lastName}
                                     </p>
                                 </div>
-                            </div>
+                            </button>
                         </SidebarMenuItem>
                     )}
                 </SidebarMenu>
