@@ -1,29 +1,50 @@
 // components/admin/UsersTable.tsx
+
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+
 import {Badge} from '@/components/ui/badge';
 import {ArrowDown, ArrowUp, Ban, MoreVertical, ShieldCheck, User, UserCheck} from 'lucide-react';
+
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+
+import {useNavigate} from 'react-router-dom';
+import {toast} from 'sonner';
 import {adminService} from '@/services/adminService';
 import {useError} from '@/hooks/useError';
-import {toast} from 'sonner';
-import type {AdminUserResponse} from "@/types/user.ts";
-import type {Page} from "@/types/page.ts";
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
-import {Button} from "@/components/ui/button.tsx";
-import {useNavigate} from "react-router-dom";
+
+import type {AdminUserResponse} from '@/types/user';
 
 interface UsersTableProps {
-    users: Page<AdminUserResponse>;
+    users: AdminUserResponse[];
+
+    search: string;
+    onSearchChange: (value: string) => void;
+    isSearching: boolean;
+
     onActionComplete: () => void;
+
     selectedUserId?: string;
+
     sortField: string;
     sortDirection: 'asc' | 'desc';
     onSort: (field: string) => void;
+
     page: number;
     onPageChange: (page: number) => void;
+
+    totalPages: number;
+    totalElements: number;
+    first: boolean;
+    last: boolean;
 }
 
 export function UsersTable({
                                users,
+                               search,
+                               onSearchChange,
+                               isSearching,
                                onActionComplete,
                                selectedUserId,
                                sortField,
@@ -31,9 +52,18 @@ export function UsersTable({
                                onSort,
                                page,
                                onPageChange,
+                               totalPages,
+                               totalElements,
+                               first,
+                               last
                            }: UsersTableProps) {
+
     const {handleError} = useError();
     const navigate = useNavigate();
+
+    // =========================
+    // Actions
+    // =========================
 
     const handleBlockUser = async (userId: string, isBlocked: boolean) => {
         try {
@@ -44,6 +74,7 @@ export function UsersTable({
                 await adminService.blockUser(userId);
                 toast.success('Пользователь заблокирован');
             }
+
             onActionComplete();
         } catch (error) {
             handleError(error);
@@ -54,11 +85,16 @@ export function UsersTable({
         try {
             await adminService.grantAdmin(userId);
             toast.success('Права администратора выданы');
+
             onActionComplete();
         } catch (error) {
             handleError(error);
         }
     };
+
+    // =========================
+    // Sorting icon
+    // =========================
 
     const renderSortIcon = (field: string) => {
         if (sortField !== field) return null;
@@ -68,78 +104,110 @@ export function UsersTable({
             : <ArrowDown className="h-3 w-3"/>;
     };
 
+    // =========================
+    // Render
+    // =========================
+
     return (
         <div className="rounded-md border">
+
+            {/* 🔎 Search */}
+            <div className="p-4 border-b">
+                <Input
+                    placeholder="Поиск по email или UUID..."
+                    value={search}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                />
+            </div>
+
             <Table>
                 <TableHeader>
                     <TableRow>
+
                         <TableHead
                             className="cursor-pointer select-none"
-                            onClick={() => onSort('firstName')}
+                            onClick={() => !search && onSort('firstName')}
                         >
                             <div className="flex items-center gap-1">
                                 Пользователь
-                                {renderSortIcon('firstName')}
+                                {!search && renderSortIcon('firstName')}
                             </div>
                         </TableHead>
+
                         <TableHead
                             className="cursor-pointer select-none"
-                            onClick={() => onSort('email')}
+                            onClick={() => !search && onSort('email')}
                         >
                             <div className="flex items-center gap-1">
                                 Email
-                                {renderSortIcon('email')}
+                                {!search && renderSortIcon('email')}
                             </div>
                         </TableHead>
+
                         <TableHead>Роль</TableHead>
                         <TableHead>Статус</TableHead>
+
                         <TableHead
                             className="cursor-pointer select-none"
-                            onClick={() => onSort('createdAt')}
+                            onClick={() => !search && onSort('createdAt')}
                         >
                             <div className="flex items-center gap-1">
                                 Регистрация
-                                {renderSortIcon('createdAt')}
+                                {!search && renderSortIcon('createdAt')}
                             </div>
                         </TableHead>
+
                         <TableHead>Действия</TableHead>
+
                     </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                    {users.content.map((user) => (
+
+                    {users.map((user) => (
                         <TableRow
                             key={user.id}
                             className={`
-                  ${selectedUserId === user.id ? 'bg-accent' : ''}
-                  hover:bg-muted/50 cursor-pointer transition-colors
-                `}
+                                ${selectedUserId === user.id ? 'bg-accent' : ''}
+                                hover:bg-muted/50 cursor-pointer transition-colors
+                            `}
                             onClick={() => navigate(`/admin/users/${user.id}`)}
                         >
+
+                            {/* Пользователь */}
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-2">
                                     {selectedUserId === user.id && (
                                         <div className="w-2 h-2 rounded-full bg-primary"/>
                                     )}
+
                                     <div>
                                         <div>{user.firstName} {user.lastName}</div>
+
                                         <div
                                             className="text-xs text-muted-foreground font-mono cursor-pointer hover:underline"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 navigator.clipboard.writeText(user.id)
                                                     .then(() => toast.success('ID скопирован!'))
                                                     .catch(() => toast.error('Не удалось скопировать'));
                                             }}
-                                            title="Кликните, чтобы скопировать ID"
                                         >
                                             {user.id.substring(0, 8)}...
                                         </div>
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="break-all">{user.email}</TableCell>
+
+                            {/* Email */}
+                            <TableCell className="break-all">
+                                {user.email}
+                            </TableCell>
+
+                            {/* Role */}
                             <TableCell>
                                 {user.role === 'ADMIN' ? (
-                                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                                         <ShieldCheck className="h-3 w-3 mr-1 inline"/>
                                         Админ
                                     </Badge>
@@ -150,6 +218,8 @@ export function UsersTable({
                                     </Badge>
                                 )}
                             </TableCell>
+
+                            {/* Status */}
                             <TableCell>
                                 {user.userBlocked ? (
                                     <Badge variant="destructive">
@@ -158,19 +228,17 @@ export function UsersTable({
                                     </Badge>
                                 ) : !user.enabled ? (
                                     <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                                        <User className="h-3 w-3 mr-1 inline"/>
                                         Не активирован
                                     </Badge>
                                 ) : (
-                                    <Badge
-                                        variant="outline"
-                                        className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-                                    >
+                                    <Badge variant="outline" className="bg-green-100 text-green-800">
                                         <UserCheck className="h-3 w-3 mr-1 inline"/>
                                         Активен
                                     </Badge>
                                 )}
                             </TableCell>
+
+                            {/* Created */}
                             <TableCell>
                                 {new Date(user.createdAt).toLocaleDateString('ru-RU', {
                                     year: 'numeric',
@@ -178,73 +246,83 @@ export function UsersTable({
                                     day: 'numeric'
                                 })}
                             </TableCell>
+
+                            {/* Actions */}
                             <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button
-                                            className="p-1 flex items-center justify-center hover:bg-muted rounded-full">
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="p-1 hover:bg-muted rounded-full"
+                                        >
                                             <MoreVertical className="h-4 w-4 text-muted-foreground"/>
                                         </button>
                                     </DropdownMenuTrigger>
 
                                     <DropdownMenuContent align="end" className="w-48">
-                                        {user.userBlocked ? (
-                                            <DropdownMenuItem
-                                                onClick={() => handleBlockUser(user.id, user.userBlocked)}
-                                                className="flex items-center gap-2"
-                                            >
-                                                <UserCheck className="h-4 w-4"/> Разблокировать
-                                            </DropdownMenuItem>
-                                        ) : (
-                                            <DropdownMenuItem
-                                                onClick={() => handleBlockUser(user.id, user.userBlocked)}
-                                                className="flex items-center gap-2"
-                                            >
-                                                <Ban className="h-4 w-4"/> Заблокировать
-                                            </DropdownMenuItem>
-                                        )}
+
+                                        <DropdownMenuItem
+                                            onClick={() => handleBlockUser(user.id, user.userBlocked)}
+                                        >
+                                            {user.userBlocked ? 'Разблокировать' : 'Заблокировать'}
+                                        </DropdownMenuItem>
 
                                         {user.role !== 'ADMIN' && (
                                             <DropdownMenuItem
                                                 onClick={() => handleGrantAdmin(user.id)}
-                                                className="flex items-center gap-2"
                                             >
-                                                <ShieldCheck className="h-4 w-4"/> Назначить админом
+                                                Назначить админом
                                             </DropdownMenuItem>
                                         )}
+
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
+
                         </TableRow>
                     ))}
+
+                    {users.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                                {isSearching ? 'Поиск...' : 'Ничего не найдено'}
+                            </TableCell>
+                        </TableRow>
+                    )}
+
                 </TableBody>
             </Table>
-            <div className="flex items-center justify-between px-4 py-3 border-t">
-                <div className="text-sm text-muted-foreground">
-                    Страница {users.number + 1} из {users.totalPages}
-                    {' '}• Всего пользователей: {users.totalElements}
-                </div>
 
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={users.first}
-                        onClick={() => onPageChange(page - 1)}
-                    >
-                        Назад
-                    </Button>
+            {/* Pagination (hidden during search) */}
+            {!search.trim() && (
+                <div className="flex items-center justify-between px-4 py-3 border-t">
+                    <div className="text-sm text-muted-foreground">
+                        Страница {page + 1} из {totalPages}
+                        {' '}• Всего пользователей: {totalElements}
+                    </div>
 
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={users.last}
-                        onClick={() => onPageChange(page + 1)}
-                    >
-                        Вперёд
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={first}
+                            onClick={() => onPageChange(page - 1)}
+                        >
+                            Назад
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={last}
+                            onClick={() => onPageChange(page + 1)}
+                        >
+                            Вперёд
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            )}
+
         </div>
     );
 }

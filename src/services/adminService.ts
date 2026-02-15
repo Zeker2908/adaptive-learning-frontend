@@ -4,6 +4,11 @@ import type {AdminUserResponse} from "@/types/user.ts";
 import type {Page} from "@/types/page.ts";
 import {api} from "@/services/api.ts";
 
+const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isUUID = (value: string): boolean => UUID_REGEX.test(value.trim());
+
 export const adminService = {
 
     async getUsers(
@@ -28,39 +33,37 @@ export const adminService = {
         );
     },
 
-    /**
-     * Получить пользователя по ID
-     */
     async getUserById(userId: string): Promise<AdminUserResponse> {
         return api.get(`/admin/users/${userId}`);
     },
 
     /**
-     * Получить пользователя по полному email
+     * Умный поиск:
+     * - если UUID → ищем по ID
+     * - иначе → ищем по email prefix
      */
-    async getUserByEmail(email: string): Promise<AdminUserResponse> {
-        return api.get(`/admin/users/email/${encodeURIComponent(email)}`);
+    async smartSearch(query: string): Promise<AdminUserResponse[]> {
+        const trimmed = query.trim();
+
+        if (!trimmed) return [];
+
+        if (isUUID(trimmed)) {
+            const user = await this.getUserById(trimmed);
+            return user ? [user] : [];
+        }
+
+        return this.searchUsersByEmail(trimmed);
     },
 
-    /**
-     * Выдать права администратора пользователю
-     */
     async grantAdmin(userId: string): Promise<AdminUserResponse> {
         return api.patch(`/admin/users/${userId}/grant-admin`);
     },
 
-    /**
-     * Заблокировать пользователя
-     */
     async blockUser(userId: string): Promise<AdminUserResponse> {
         return api.patch(`/admin/users/${userId}/block`);
     },
 
-    /**
-     * Разблокировать пользователя
-     */
     async unblockUser(userId: string): Promise<AdminUserResponse> {
         return api.patch(`/admin/users/${userId}/unblock`);
     },
-
 }

@@ -21,20 +21,29 @@ export default function AdminUsersPage() {
         numberOfElements: 0,
         empty: true,
     });
+    const [search, setSearch] = useState('');
+    const [searchResults, setSearchResults] = useState<AdminUserResponse[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+
     const [isLoading, setIsLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
     const {handleError} = useError();
+
     const [sortField, setSortField] = useState<string>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [page, setPage] = useState(0);
-    const size = 50;
+    const sizeRef = 50;
+
+    const displayedUsers = search.trim()
+        ? searchResults
+        : users.content;
 
     const loadUsers = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await adminService.getUsers(
                 page,
-                size,
+                sizeRef,
                 sortField,
                 sortDirection
             );
@@ -44,7 +53,7 @@ export default function AdminUsersPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [handleError, page, size, sortField, sortDirection]);
+    }, [handleError, page, sortField, sortDirection]);
 
     const handleSort = (field: string) => {
         if (sortField === field) {
@@ -55,8 +64,18 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleActionComplete = () => {
-        loadUsers();
+    const handleActionComplete = async () => {
+        if (search.trim()) {
+            try {
+                const results = await adminService.smartSearch(search);
+                setSearchResults(results);
+            } catch (error) {
+                handleError(error);
+            }
+        } else {
+            loadUsers();
+        }
+
         if (selectedUser) {
             adminService.getUserById(selectedUser.id)
                 .then(updatedUser => setSelectedUser(updatedUser))
@@ -65,8 +84,33 @@ export default function AdminUsersPage() {
     };
 
     useEffect(() => {
+        const timeout = setTimeout(async () => {
+            const trimmed = search.trim();
+
+            if (!trimmed) {
+                setSearchResults([]);
+                setIsSearching(false);
+                return;
+            }
+
+            try {
+                setIsSearching(true);
+                const results = await adminService.smartSearch(trimmed);
+                setSearchResults(results);
+            } catch (error) {
+                handleError(error);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300); // лучше 300мс
+
+        return () => clearTimeout(timeout);
+    }, [search, handleError]);
+
+    useEffect(() => {
+        if (!search.trim())
         loadUsers();
-    }, [loadUsers]);
+    }, [loadUsers, search]);
 
     return (
         <RootLayout>
@@ -102,7 +146,11 @@ export default function AdminUsersPage() {
                             </div>
                         ) : (
                             <UsersTable
-                                users={users}
+                                users={displayedUsers}
+                                search={search}
+                                onSearchChange={setSearch}
+                                isSearching={isSearching}
+
                                 onActionComplete={handleActionComplete}
                                 selectedUserId={selectedUser?.id}
                                 sortField={sortField}
@@ -110,6 +158,11 @@ export default function AdminUsersPage() {
                                 onSort={handleSort}
                                 page={page}
                                 onPageChange={setPage}
+
+                                totalPages={users.totalPages}
+                                totalElements={users.totalElements}
+                                first={users.first}
+                                last={users.last}
                             />
                         )}
                     </CardContent>
