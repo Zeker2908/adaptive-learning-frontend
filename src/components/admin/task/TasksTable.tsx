@@ -1,6 +1,6 @@
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table.tsx';
 import {Badge} from '@/components/ui/badge.tsx';
-import {ArrowDown, ArrowUp, Code2, Edit, MoreVertical, Trash2, CircleCheck, CircleDot, X} from 'lucide-react';
+import {ArrowDown, ArrowUp, CircleCheck, CircleDot, Code2, Edit, MoreVertical, Trash2, X} from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,6 +21,9 @@ const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const;
 
 interface TasksTableProps {
     tasks: TaskResponse[];
+
+    hasActiveFilters: boolean;
+    onClearFilters: () => void;
 
     // Filters
     titleFilter: string;
@@ -48,6 +51,8 @@ interface TasksTableProps {
 
 export function TasksTable({
                                tasks,
+                               hasActiveFilters,
+                               onClearFilters,
                                titleFilter,
                                onTitleFilterChange,
                                selectedDifficulties,
@@ -112,16 +117,7 @@ export function TasksTable({
             onTagsChange([...selectedTags, tag]);
         }
     };
-
-    const clearFilters = () => {
-        onTitleFilterChange('');
-        onDifficultiesChange([]);
-        onTagsChange([]);
-    };
-
-    const hasActiveFilters = titleFilter.trim() || selectedDifficulties.length > 0 || selectedTags.length > 0;
-
-    // =========================
+// =========================
     // Sorting icon
     // =========================
 
@@ -188,7 +184,7 @@ export function TasksTable({
                         className="max-w-sm"
                     />
                     {hasActiveFilters && (
-                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                        <Button variant="ghost" size="sm" onClick={onClearFilters}>
                             Сбросить
                         </Button>
                     )}

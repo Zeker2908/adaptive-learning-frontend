@@ -28,7 +28,8 @@ export default function AdminTasksPage() {
     const navigate = useNavigate();
 
     // Filters
-    const [titleFilter, setTitleFilter] = useState('');
+    const [titleFilter, setTitleFilter] = useState('');        // Для API (дебансированный)
+    const [titleInput, setTitleInput] = useState('');           // Для инпута (мгновенный)
     const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -38,13 +39,23 @@ export default function AdminTasksPage() {
     const [page, setPage] = useState(0);
     const sizeRef = 20;
 
+    // 🔹 Debounce: обновляем titleFilter только после паузы в 400мс
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setTitleFilter(titleInput);
+            setPage(0); // сброс на первую страницу при новом поиске
+        }, 400);
+
+        return () => clearTimeout(handler); // очистка таймера при новом вводе
+    }, [titleInput]);
+
     const loadTasks = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await adminService.getTasks({
                 page,
                 size: sizeRef,
-                title: titleFilter.trim() || undefined,
+                title: titleFilter.trim() || undefined, // ✅ используем дебансированное значение
                 difficulties: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
                 tags: selectedTags.length > 0 ? selectedTags : undefined,
                 sortField,
@@ -67,13 +78,19 @@ export default function AdminTasksPage() {
         }
     };
 
-    const handleFilterChange = () => {
-        setPage(0); // сброс на первую страницу при изменении фильтров
+    // 🔹 Сброс фильтров (включая инпут)
+    const clearFilters = () => {
+        setTitleInput('');
+        setTitleFilter('');
+        setSelectedDifficulties([]);
+        setSelectedTags([]);
+        setPage(0);
     };
 
+    // Сброс страницы при изменении фильтров (кроме поиска — он уже сбрасывается в debounce)
     useEffect(() => {
-        handleFilterChange();
-    }, [titleFilter, selectedDifficulties, selectedTags]);
+        setPage(0);
+    }, [selectedDifficulties, selectedTags]);
 
     useEffect(() => {
         loadTasks();
@@ -125,25 +142,24 @@ export default function AdminTasksPage() {
                         ) : (
                             <TasksTable
                                 tasks={tasks.content}
-                                titleFilter={titleFilter}
-                                onTitleFilterChange={setTitleFilter}
+                                titleFilter={titleInput}
+                                onTitleFilterChange={setTitleInput}
                                 selectedDifficulties={selectedDifficulties}
                                 onDifficultiesChange={setSelectedDifficulties}
                                 selectedTags={selectedTags}
                                 onTagsChange={setSelectedTags}
-
                                 onActionComplete={handleActionComplete}
-
                                 sortField={sortField}
                                 sortDirection={sortDirection}
                                 onSort={handleSort}
-
                                 page={page}
                                 onPageChange={setPage}
                                 totalPages={tasks.totalPages}
                                 totalElements={tasks.totalElements}
                                 first={tasks.first}
                                 last={tasks.last}
+                                hasActiveFilters={!!titleFilter.trim() || selectedDifficulties.length > 0 || selectedTags.length > 0}
+                                onClearFilters={clearFilters} // ✅ передаём обработчик сброса
                             />
                         )}
                     </CardContent>

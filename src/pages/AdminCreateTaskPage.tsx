@@ -10,6 +10,7 @@ import type {TaskRequest} from '@/types/task';
 import {TaskForm} from "@/components/admin/task/TaskForm.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {useNavigate} from "react-router-dom";
+import {toast} from 'sonner';
 
 export default function AdminCreateTaskPage() {
     const {handleError} = useError();
@@ -20,7 +21,8 @@ export default function AdminCreateTaskPage() {
         try {
             setIsLoading(true);
             await adminService.createTask(data);
-            // можно потом редирект или toast
+            toast.success('Задача успешно создана!');
+            navigate('/admin/tasks'); // редирект назад к списку
         } catch (e) {
             handleError(e);
         } finally {

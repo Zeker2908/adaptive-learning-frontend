@@ -9,7 +9,7 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import {BookOpen, ChevronDown, ChevronUp, HelpCircle, Home, LogOut, Play, Trophy, Users,} from "lucide-react";
+import {BookOpen, ChevronDown, ChevronUp, HelpCircle, Home, LogOut, Play, Users,} from "lucide-react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {useAuthStore} from "@/store/authStore.ts";
@@ -20,9 +20,7 @@ import {useState} from 'react';
 
 const items = [
     {title: "Главная", url: "/dashboard", icon: Home},
-    {title: "Бесконечная очередь", url: "/task-stream", icon: Play},
-    {title: "Курсы", url: "/courses", icon: BookOpen},
-    {title: "Прогресс", url: "/progress", icon: Trophy},
+    {title: "Персональный трек", url: "/task-stream", icon: Play},
     {title: "Сообщество", url: "/community", icon: Users},
     {title: "Помощь", url: "/help", icon: HelpCircle},
 ];

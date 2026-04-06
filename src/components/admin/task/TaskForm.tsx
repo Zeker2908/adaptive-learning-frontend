@@ -1,30 +1,42 @@
-// components/admin/tasks/TaskForm.tsx
-
 import {useState} from 'react';
 import type {Difficulty, TaskContent, TaskRequest} from '@/types/task';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
+import {Label} from '@/components/ui/label';
 import {TaskContentForm} from './TaskContentForm';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 
 interface Props {
     onSubmit: (data: TaskRequest) => void;
     isLoading: boolean;
+    initialData?: Partial<TaskRequest>;
 }
 
-export function TaskForm({onSubmit, isLoading}: Props) {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [difficulty, setDifficulty] = useState<Difficulty>('EASY');
-    const [tags, setTags] = useState<string>('');
-    const [content, setContent] = useState<TaskContent | null>(null);
+export function TaskForm({onSubmit, isLoading, initialData}: Props) {
+    const [title, setTitle] = useState(initialData?.title || '');
+    const [description, setDescription] = useState(initialData?.description || '');
+    const [difficulty, setDifficulty] = useState<Difficulty>(initialData?.difficulty || 'EASY');
+    const [tags, setTags] = useState(initialData?.tags?.join(', ') || '');
 
-    const handleSubmit = () => {
-        if (!content) return;
+    const createDefaultContent = (): TaskContent => ({
+        type: 'CODING',
+        templateCode: '',
+        testCases: [{input: '', output: ''}]
+    });
+
+    const [content, setContent] = useState<TaskContent>(
+        initialData?.content || createDefaultContent()
+    );
+
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!content || !title.trim()) return;
 
         onSubmit({
-            title,
-            description,
+            title: title.trim(),
+            description: description.trim() || undefined,
             difficulty,
             tags: tags.split(',').map(t => t.trim()).filter(Boolean),
             content
@@ -32,40 +44,85 @@ export function TaskForm({onSubmit, isLoading}: Props) {
     };
 
     return (
-        <div className="space-y-6">
-            <Input
-                placeholder="Название задачи"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="title">Название</Label>
+                <Input
+                    id="title"
+                    placeholder="Например: Сумма двух чисел"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    required
+                />
+            </div>
 
-            <Textarea
-                placeholder="Описание"
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-            />
+            <div className="space-y-2">
+                <Label htmlFor="description">Описание</Label>
+                <Textarea
+                    id="description"
+                    placeholder="Опишите условие задачи..."
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    rows={4}
+                />
+            </div>
 
-            <select
-                className="w-full border rounded p-2"
-                value={difficulty}
-                onChange={e => setDifficulty(e.target.value as Difficulty)}
-            >
-                <option value="EASY">EASY</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HARD">HARD</option>
-            </select>
+            <div className="space-y-2">
+                <Label>Сложность</Label>
+                <Select value={difficulty} onValueChange={(v) => setDifficulty(v as Difficulty)}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Выберите сложность"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="EASY">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500"/>
+                            Лёгкая
+                          </span>
+                        </SelectItem>
 
-            <Input
-                placeholder="Теги (через запятую)"
-                value={tags}
-                onChange={e => setTags(e.target.value)}
-            />
+                        <SelectItem value="MEDIUM">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-yellow-500"/>
+                            Средняя
+                          </span>
+                        </SelectItem>
 
-            <TaskContentForm onChange={setContent}/>
+                        <SelectItem value="HARD">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500"/>
+                            Сложная
+                          </span>
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
 
-            <Button onClick={handleSubmit} disabled={isLoading}>
-                {isLoading ? 'Создание...' : 'Создать задачу'}
-            </Button>
-        </div>
+            <div className="space-y-2">
+                <Label htmlFor="tags">Теги</Label>
+                <Input
+                    id="tags"
+                    placeholder="arrays, strings, dp (через запятую)"
+                    value={tags}
+                    onChange={e => setTags(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                    Пример: <code>arrays, sorting, easy</code>
+                </p>
+            </div>
+
+            <div className="pt-4 border-t">
+                <TaskContentForm
+                    value={content}
+                    onChange={setContent}
+                />
+            </div>
+
+            <div className="flex justify-end pt-4">
+                <Button type="submit" disabled={isLoading || !content || !title.trim()}>
+                    {isLoading ? 'Создание...' : 'Создать задачу'}
+                </Button>
+            </div>
+        </form>
     );
 }
