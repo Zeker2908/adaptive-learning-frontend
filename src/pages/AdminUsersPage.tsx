@@ -5,7 +5,7 @@ import {adminService} from '@/services/adminService';
 import {useError} from '@/hooks/useError';
 import {Users} from 'lucide-react';
 import {RootLayout} from '@/components/layout/RootLayout';
-import {UsersTable} from '@/components/admin/UsersTable';
+import {UsersTable} from '@/components/admin/user/UsersTable.tsx';
 import type {AdminUserResponse} from '@/types/user';
 import type {Page} from "@/types/page.ts";
 

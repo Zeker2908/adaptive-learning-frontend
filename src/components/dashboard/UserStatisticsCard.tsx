@@ -36,11 +36,11 @@ export function UserStatisticsCard({statistics, className}: Props) {
                             />
                             <StatItem
                                 label="Процент успеха"
-                                value={`${statistics.successRate.toFixed(1)}%`}
+                                value={`${(statistics.successRate * 100).toFixed(1)}%`}
                             />
                             <StatItem
                                 label="Средняя уверенность"
-                                value={`${statistics.averageConfidence.toFixed(1)}%`}
+                                value={`${(statistics.averageConfidence * 100).toFixed(1)}%`}
                             />
                         </div>
 

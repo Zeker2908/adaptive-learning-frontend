@@ -1,20 +1,20 @@
 // components/admin/UsersTable.tsx
 
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table.tsx';
 
-import {Badge} from '@/components/ui/badge';
+import {Badge} from '@/components/ui/badge.tsx';
 import {ArrowDown, ArrowUp, Ban, MoreVertical, ShieldCheck, User, UserCheck} from 'lucide-react';
 
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu.tsx';
+import {Button} from '@/components/ui/button.tsx';
+import {Input} from '@/components/ui/input.tsx';
 
 import {useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
-import {adminService} from '@/services/adminService';
-import {useError} from '@/hooks/useError';
+import {adminService} from '@/services/adminService.ts';
+import {useError} from '@/hooks/useError.ts';
 
-import type {AdminUserResponse} from '@/types/user';
+import type {AdminUserResponse} from '@/types/user.ts';
 
 interface UsersTableProps {
     users: AdminUserResponse[];
@@ -156,8 +156,6 @@ export function UsersTable({
                                 {!search && renderSortIcon('createdAt')}
                             </div>
                         </TableHead>
-
-                        <TableHead>Действия</TableHead>
 
                     </TableRow>
                 </TableHeader>

@@ -8,26 +8,32 @@ interface UserState {
     user: UserResponse | null;
     isAdmin: () => boolean;
     loading: boolean;
+    isInitialized: boolean;
     fetchUser: () => Promise<void>;
     setUser: (user: UserResponse) => void;
     clearUser: () => void;
 }
 
-export const useUserStore = create<UserState>()((set, get) => ({  // ← Добавили get
+export const useUserStore = create<UserState>()((set, get) => ({
     user: null,
     loading: false,
+    isInitialized: false,
 
-    isAdmin: () => {
-        return get().user?.role === 'ADMIN';
-    },
+    isAdmin: () => get().user?.role === 'ADMIN',
 
     fetchUser: async () => {
         set({loading: true});
+
         try {
             const user = await userService.currentUser();
 
             if (user.userBlocked) {
-                set({user: null, loading: false});
+                set({
+                    user: null,
+                    loading: false,
+                    isInitialized: true
+                });
+
                 throw {
                     timestamp: new Date().toISOString(),
                     path: '/api/v1/users/me',
@@ -38,14 +44,26 @@ export const useUserStore = create<UserState>()((set, get) => ({  // ← Доб�
                 } as ApiError;
             }
 
-            set({user, loading: false});
+            set({
+                user,
+                loading: false,
+                isInitialized: true
+            });
+
         } catch (error) {
-            set({user: null, loading: false});
+            set({
+                user: null,
+                loading: false,
+                isInitialized: true
+            });
+
             throw error;
         }
     },
 
-    setUser: (user: UserResponse) => set({user}),
+    setUser: (user: UserResponse) =>
+        set({user, isInitialized: true}),
 
-    clearUser: () => set({user: null}),
+    clearUser: () =>
+        set({user: null, isInitialized: true}),
 }));

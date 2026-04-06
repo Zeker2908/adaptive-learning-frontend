@@ -1,7 +1,7 @@
 // components/admin/AdminUserInfoCard.tsx
-import type { AdminUserResponse } from '@/types/user';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import type { AdminUserResponse } from '@/types/user.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx';
+import { Badge } from '@/components/ui/badge.tsx';
 import { Ban, ShieldCheck, User, UserCheck } from 'lucide-react';
 import React from "react";
 

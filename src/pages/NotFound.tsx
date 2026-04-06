@@ -18,7 +18,7 @@ export default function NotFoundPage() {
                         Извините, страница, которую вы ищете, не существует.
                     </p>
                     <Button asChild>
-                        <Link to="/dashboard">Перейти в личный кабинет</Link>
+                        <Link to="/dashboard">Вернуться на главную</Link>
                     </Button>
                 </CardContent>
             </Card>

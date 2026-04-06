@@ -12,7 +12,7 @@ import {ProgressCard} from '@/components/dashboard/ProgressCard';
 import {Button} from '@/components/ui/button';
 import {ArrowLeft, Ban, ShieldCheck, User} from 'lucide-react';
 import {toast} from 'sonner';
-import {AdminUserInfoCard} from "@/components/admin/AdminUserInfoCard.tsx";
+import {AdminUserInfoCard} from "@/components/admin/user/AdminUserInfoCard.tsx";
 import {UserStatisticsCard} from "@/components/dashboard/UserStatisticsCard.tsx";
 
 export default function UserViewPage() {
@@ -115,7 +115,7 @@ export default function UserViewPage() {
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate('/admin/users')}
+                            onClick={() => navigate(-1)}
                         >
                             <ArrowLeft className="h-4 w-4 mr-2" />
                         </Button>
