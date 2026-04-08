@@ -1,28 +1,27 @@
 // components/queue/TaskNavigator.tsx
 import {Button} from '@/components/ui/button';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
+import {cn} from '@/lib/utils';
 
 interface Props {
-    currentIndex: number;
-    totalTasks: number;
     onPrevious: () => void;
     onNext: () => void;
     canPrevious: boolean;
     canNext: boolean;
     isLoadingMore?: boolean;
+    className?: string;
 }
 
 export function TaskNavigator({
-                                  currentIndex,
-                                  totalTasks,
                                   onPrevious,
                                   onNext,
                                   canPrevious,
                                   canNext,
                                   isLoadingMore,
+                                  className,
                               }: Props) {
     return (
-        <div className="flex items-center justify-between py-2">
+        <div className={cn('flex items-center justify-between py-2', className)}>
             <Button
                 variant="outline"
                 size="sm"
@@ -34,10 +33,7 @@ export function TaskNavigator({
                 Назад
             </Button>
 
-            <span className="text-sm text-muted-foreground">
-        Задача {currentIndex + 1} из {totalTasks}
-                {isLoadingMore && <span className="ml-2 text-xs text-primary">• загрузка...</span>}
-      </span>
+            <div className="w-20"/>
 
             <Button
                 variant="outline"

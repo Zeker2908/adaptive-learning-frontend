@@ -1,12 +1,24 @@
-import type {TaskResponse} from '@/types/task';
-import type {SolutionStatus} from '@/types/solution';
+// types/queue.ts
+import type { TaskResponse } from '@/types/task';
+import type { SolutionStatus, Language as BackendLanguage } from '@/types/solution';
+
+export interface SubmissionResult {
+    id: string;
+    status: SolutionStatus;
+    feedback: string;
+    language: BackendLanguage;
+    submittedAt: number;
+}
 
 export interface QueueState {
     tasks: TaskResponse[];
     currentIndex: number;
     lastUpdated: number;
-    // Кэш кода: taskId -> languageId -> source code
     codeCache: Record<string, Record<string, string>>;
+    // 🔹 Результаты по задачам: taskId -> массив последних 3 решений
+    taskResults: Record<string, SubmissionResult[]>;
+    // 🔹 Решённые задачи (нельзя отправить повторно)
+    solvedTasks: Set<string>;
 }
 
 export interface SubmissionState {
@@ -44,4 +56,11 @@ export interface UseQueueReturn {
     // Состояние очереди
     isQueueEmpty: boolean;
     isLastTask: boolean;
+
+    // 🔹 Результаты и блокировка
+    taskResults: SubmissionResult[];
+    isTaskSolved: boolean;
+    canSubmit: boolean;
+    markTaskAsSolved: (taskId: string) => void;
+    addSubmissionResult: (taskId: string, result: SubmissionResult) => void;
 }

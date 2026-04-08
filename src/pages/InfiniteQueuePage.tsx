@@ -10,8 +10,6 @@ import {useQueueState} from "@/hooks/useQueueState.ts";
 export default function InfiniteQueuePage() {
     const {
         currentTask,
-        currentIndex,
-        totalLoaded,
         goToNext,
         goToPrevious,
         canGoNext,
@@ -22,7 +20,21 @@ export default function InfiniteQueuePage() {
         setCode,
         isLoading,
         isQueueEmpty,
+
+        taskResults,
+        isTaskSolved,
+        markTaskAsSolved,
+        addSubmissionResult,
     } = useQueueState();
+
+    // 🔹 Обработчик успешного решения
+    const handleTaskSolved = (taskId: string) => {
+        markTaskAsSolved(taskId);
+        // 🔹 Авто-переход с небольшой задержкой, чтобы пользователь увидел тост
+        setTimeout(() => {
+            goToNext();
+        }, 1500);
+    };
 
     if (isLoading && isQueueEmpty) {
         return (
@@ -67,19 +79,15 @@ export default function InfiniteQueuePage() {
                             Решайте задачи по мере сил — система подберёт следующие
                         </p>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                        Загружено: {totalLoaded} задач
-                    </div>
                 </div>
 
-                {/* Navigation */}
+                {/* Navigation (без счётчика) */}
                 <TaskNavigator
-                    currentIndex={currentIndex}
-                    totalTasks={totalLoaded}
                     onPrevious={goToPrevious}
                     onNext={goToNext}
                     canPrevious={canGoPrevious}
                     canNext={canGoNext}
+                    isLoadingMore={isLoading}
                 />
 
                 {/* Main content grid */}
@@ -98,10 +106,23 @@ export default function InfiniteQueuePage() {
                                 onCodeChange={setCode}
                                 selectedLanguage={selectedLanguage}
                                 onLanguageChange={setSelectedLanguage}
+                                isTaskSolved={isTaskSolved}
+                                taskResults={taskResults}
+                                onSolved={handleTaskSolved}
+                                onResult={addSubmissionResult}
                             />
                         )}
                     </Card>
                 </div>
+
+                {/* Bottom navigation */}
+                <TaskNavigator
+                    onPrevious={goToPrevious}
+                    onNext={goToNext}
+                    canPrevious={canGoPrevious}
+                    canNext={canGoNext}
+                    isLoadingMore={isLoading}
+                />
             </div>
         </RootLayout>
     );

@@ -1,12 +1,14 @@
-// components/queue/CodeEditorPanel.tsx
+import {useCallback, useMemo} from 'react';
 import Editor from '@monaco-editor/react';
-import { Button } from '@/components/ui/button';
-import { Send, Loader2 } from 'lucide-react';
-import { LanguageSelector } from './LanguageSelector';
-import { SubmissionStatus } from './SubmissionStatus';
-import { getLangById } from '@/config/languages';
-import type { TaskResponse } from '@/types/task';
-import {useSubmissionPolling} from "@/hooks/useSubmissionPolling.ts";
+import {Button} from '@/components/ui/button';
+import {CheckCircle2, Loader2, Send} from 'lucide-react';
+import {LanguageSelector} from './LanguageSelector';
+import {SubmissionStatus} from './SubmissionStatus';
+import {getLangById} from '@/types/languages';
+import type {TaskResponse} from '@/types/task';
+import type {SubmissionResult} from '@/types/queue';
+import {useSubmissionPolling} from "@/hooks/useSubmissionPolling";
+import {type Language, SolutionStatusLabels} from "@/types/solution";
 
 interface Props {
     task: TaskResponse;
@@ -14,6 +16,10 @@ interface Props {
     onCodeChange: (code: string) => void;
     selectedLanguage: string;
     onLanguageChange: (langId: string) => void;
+    isTaskSolved: boolean;
+    taskResults: SubmissionResult[];
+    onSolved: (taskId: string, solutionId: string) => void;
+    onResult: (taskId: string, result: SubmissionResult) => void;
 }
 
 export function CodeEditorPanel({
@@ -21,67 +27,156 @@ export function CodeEditorPanel({
                                     code,
                                     onCodeChange,
                                     selectedLanguage,
-                                    onLanguageChange
+                                    onLanguageChange,
+                                    isTaskSolved,
+                                    taskResults,
+                                    onSolved,
+                                    onResult,
                                 }: Props) {
+
     const {
         submissionStatus,
         feedback,
         isSubmitting,
         submitSolution,
-        resetSubmission
-    } = useSubmissionPolling();
+    } = useSubmissionPolling({onSolved, onResult});
 
-    const langConfig = getLangById(selectedLanguage);
+    const langConfig = useMemo(
+        () => getLangById(selectedLanguage),
+        [selectedLanguage]
+    );
 
-    const handleSubmit = () => {
-        resetSubmission();
+    const isPending = submissionStatus === 'PENDING';
+
+    const isLocked = isSubmitting || isPending || isTaskSolved;
+
+    const handleSubmit = useCallback(() => {
+        if (!code.trim() || isLocked) return;
+
         submitSolution(task.id, code, langConfig.backend);
-    };
+    }, [task.id, code, langConfig.backend, submitSolution, isLocked]);
+
+    const handleEditorChange = useCallback((val: string | undefined) => {
+        if (!isTaskSolved) {
+            onCodeChange(val ?? '');
+        }
+    }, [onCodeChange, isTaskSolved]);
 
     return (
         <div className="flex flex-col h-full">
+
+            {/* HEADER */}
             <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium flex items-center gap-2">
                     💻 Редактор кода
+
+                    {isTaskSolved && (
+                        <span className="text-xs text-green-600 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3"/>
+                            Решено
+                        </span>
+                    )}
                 </h3>
+
                 <LanguageSelector
                     value={selectedLanguage}
                     onChange={onLanguageChange}
-                    disabled={isSubmitting || submissionStatus === 'PENDING'}
+                    disabled={isLocked}
                 />
             </div>
 
-            <div className="flex-1 border rounded-md overflow-hidden mb-4">
+            {/* EDITOR */}
+            <div className="flex-1 border rounded-md overflow-hidden mb-4 relative">
+
+                {isTaskSolved && (
+                    <div
+                        className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                        <div className="text-center p-4">
+                            <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2"/>
+                            <p className="font-medium text-green-700">Задача уже решена!</p>
+                            <p className="text-sm text-muted-foreground">
+                                Переходите к следующей задаче
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <Editor
                     height="100%"
                     language={langConfig.monaco}
                     value={code}
-                    onChange={(val) => onCodeChange(val || '')}
+                    onChange={handleEditorChange}
                     theme="vs-dark"
                     options={{
-                        minimap: { enabled: false },
+                        minimap: {enabled: false},
                         fontSize: 14,
                         wordWrap: 'on',
                         automaticLayout: true,
                         scrollBeyondLastLine: false,
-                        padding: { top: 12 },
+                        padding: {top: 12},
                         tabSize: 4,
+                        readOnly: isTaskSolved,
                     }}
                 />
             </div>
 
+            {/* HISTORY */}
+            {taskResults.length > 0 && (
+                <div className="mb-4 p-3 bg-muted/30 rounded-md border">
+                    <div className="text-xs font-medium text-muted-foreground mb-2">
+                        Последние попытки ({taskResults.length})
+                    </div>
+
+                    <div className="space-y-2">
+                        {taskResults.map((result) => (
+                            <div
+                                key={result.id}
+                                className="flex items-center justify-between text-xs p-2 bg-background rounded border"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${
+                                        result.status === 'SUCCESS' ? 'bg-green-500' :
+                                            result.status === 'FAILED' ? 'bg-red-500' :
+                                                'bg-yellow-500'
+                                    }`}/>
+
+                                    <span>{SolutionStatusLabels[result.status]}</span>
+                                    <span className="text-muted-foreground">•</span>
+                                    <span className="text-muted-foreground">
+                                        {getLangById(result.language as Language)?.label || result.language}
+                                    </span>
+                                </div>
+
+                                <span className="text-muted-foreground">
+                                    {new Date(result.submittedAt)
+                                        .toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ACTIONS */}
             <div className="space-y-3">
                 <Button
                     onClick={handleSubmit}
-                    disabled={isSubmitting || submissionStatus === 'PENDING' || !code.trim()}
+                    disabled={isLocked || !code.trim()}
                     className="w-full gap-2"
                 >
-                    {(isSubmitting || submissionStatus === 'PENDING') ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                    {isSubmitting || isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin"/>
+                    ) : isTaskSolved ? (
+                        <CheckCircle2 className="h-4 w-4"/>
                     ) : (
-                        <Send className="h-4 w-4" />
+                        <Send className="h-4 w-4"/>
                     )}
-                    {(isSubmitting || submissionStatus === 'PENDING') ? 'Проверка...' : 'Отправить решение'}
+
+                    {isTaskSolved
+                        ? 'Задача решена'
+                        : isSubmitting || isPending
+                            ? 'Проверка...'
+                            : 'Отправить решение'}
                 </Button>
 
                 <SubmissionStatus

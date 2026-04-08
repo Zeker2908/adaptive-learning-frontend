@@ -1,6 +1,6 @@
 // components/queue/LanguageSelector.tsx
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {LANGUAGES} from '@/config/languages';
+import {LANGUAGES} from '@/types/languages.ts';
 
 interface Props {
     value: string;

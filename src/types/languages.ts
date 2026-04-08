@@ -1,4 +1,4 @@
-import type {Language as BackendLanguage} from '@/types/solution';
+import type {Language as BackendLanguage} from '@/types/solution.ts';
 
 export interface LangConfig {
     id: string;                    // для UI и localStorage
