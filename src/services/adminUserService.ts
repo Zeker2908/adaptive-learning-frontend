@@ -3,14 +3,13 @@
 import type {AdminUserResponse} from "@/types/user.ts";
 import type {Page} from "@/types/page.ts";
 import {api} from "@/services/api.ts";
-import type {TaskRequest, TaskResponse} from "@/types/task.ts";
 
 const UUID_REGEX =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const isUUID = (value: string): boolean => UUID_REGEX.test(value.trim());
 
-export const adminService = {
+export const adminUserService = {
 
     async getUsers(
         page: number,
@@ -66,61 +65,5 @@ export const adminService = {
 
     async unblockUser(userId: string): Promise<AdminUserResponse> {
         return api.patch(`/admin/users/${userId}/unblock`);
-    },
-
-    async createTask(data: TaskRequest): Promise<TaskResponse> {
-        return api.post("/admin/tasks", data);
-    },
-
-    async updateTask(id: string, data: TaskRequest): Promise<TaskResponse> {
-        return api.put(`/admin/tasks/${id}`, data);
-    },
-
-    async deleteTask(id: string): Promise<void> {
-        return api.delete(`/admin/tasks/${id}`);
-    },
-
-    async getTasks(params: {
-        page?: number;
-        size?: number;
-        title?: string;
-        difficulties?: string[];
-        tags?: string[];
-        sortField?: string;
-        sortDirection?: 'asc' | 'desc';
-    }): Promise<Page<TaskResponse>> {
-
-        const {
-            page = 0,
-            size = 20,
-            title,
-            difficulties,
-            tags,
-            sortField,
-            sortDirection = 'asc'
-        } = params;
-
-        const query = new URLSearchParams();
-
-        query.append('page', String(page));
-        query.append('size', String(size));
-
-        if (title) {
-            query.append('title', title);
-        }
-
-        if (difficulties && difficulties.length > 0) {
-            difficulties.forEach(d => query.append('difficulty', d));
-        }
-
-        if (tags && tags.length > 0) {
-            tags.forEach(tag => query.append('tags', tag));
-        }
-
-        if (sortField) {
-            query.append('sort', `${sortField},${sortDirection}`);
-        }
-
-        return api.get(`/admin/tasks?${query.toString()}`);
     },
 }

@@ -3,7 +3,7 @@
 import {useState} from 'react';
 import {RootLayout} from '@/components/layout/RootLayout';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {adminService} from '@/services/adminService';
+import {taskService} from '@/services/taskService';
 import {useError} from '@/hooks/useError';
 import {ArrowLeft, FilePlus} from 'lucide-react';
 import type {TaskRequest} from '@/types/task';
@@ -20,7 +20,7 @@ export default function AdminCreateTaskPage() {
     const handleSubmit = async (data: TaskRequest) => {
         try {
             setIsLoading(true);
-            await adminService.createTask(data);
+            await taskService.createTask(data);
             toast.success('Задача успешно создана!');
             navigate('/admin/tasks'); // редирект назад к списку
         } catch (e) {

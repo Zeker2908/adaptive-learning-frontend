@@ -14,7 +14,7 @@ import {toast} from 'sonner';
 import {useError} from '@/hooks/useError.ts';
 import type {TaskResponse, TaskType} from '@/types/task.ts';
 import {Checkbox} from '@/components/ui/checkbox.tsx';
-import {adminService} from "@/services/adminService.ts";
+import {taskService} from "@/services/taskService.ts";
 
 // Доступные значения для фильтров
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const;
@@ -82,7 +82,7 @@ export function TasksTable({
             return;
         }
         try {
-            await adminService.deleteTask(taskId);
+            await taskService.deleteTask(taskId);
             toast.success('Задача удалена');
             onActionComplete();
         } catch (error) {

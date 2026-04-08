@@ -1,7 +1,7 @@
 // pages/admin/AdminUsersPage.tsx
 import {useCallback, useEffect, useState} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {adminService} from '@/services/adminService';
+import {adminUserService} from '@/services/adminUserService.ts';
 import {useError} from '@/hooks/useError';
 import {Users} from 'lucide-react';
 import {RootLayout} from '@/components/layout/RootLayout';
@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
     const loadUsers = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await adminService.getUsers(
+            const response = await adminUserService.getUsers(
                 page,
                 sizeRef,
                 sortField,
@@ -67,7 +67,7 @@ export default function AdminUsersPage() {
     const handleActionComplete = async () => {
         if (search.trim()) {
             try {
-                const results = await adminService.smartSearch(search);
+                const results = await adminUserService.smartSearch(search);
                 setSearchResults(results);
             } catch (error) {
                 handleError(error);
@@ -77,7 +77,7 @@ export default function AdminUsersPage() {
         }
 
         if (selectedUser) {
-            adminService.getUserById(selectedUser.id)
+            adminUserService.getUserById(selectedUser.id)
                 .then(updatedUser => setSelectedUser(updatedUser))
                 .catch(handleError);
         }
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
 
             try {
                 setIsSearching(true);
-                const results = await adminService.smartSearch(trimmed);
+                const results = await adminUserService.smartSearch(trimmed);
                 setSearchResults(results);
             } catch (error) {
                 handleError(error);

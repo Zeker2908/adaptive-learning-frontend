@@ -1,7 +1,7 @@
 // pages/admin/UserViewPage.tsx
 import {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {adminService} from '@/services/adminService';
+import {adminUserService} from '@/services/adminUserService.ts';
 import {solutionService} from '@/services/solutionService';
 import {useError} from '@/hooks/useError';
 import type {AdminUserResponse} from '@/types/user';
@@ -36,7 +36,7 @@ export default function UserViewPage() {
             try {
                 setIsLoading(true);
                 const [userData, activityData, statisticsData] = await Promise.all([
-                    adminService.getUserById(userId),
+                    adminUserService.getUserById(userId),
                     solutionService.getDailyActivitiesByAdmin(userId),
                     solutionService.getUserStatisticsByAdmin(userId)
                 ]);
@@ -58,10 +58,10 @@ export default function UserViewPage() {
         if (!user) return;
         try {
             setIsActionLoading(true);
-            await adminService.grantAdmin(user.id);
+            await adminUserService.grantAdmin(user.id);
             toast.success('Права администратора выданы');
             // Обновляем данные пользователя
-            const updatedUser = await adminService.getUserById(user.id);
+            const updatedUser = await adminUserService.getUserById(user.id);
             setUser(updatedUser);
         } catch (error) {
             handleError(error);
@@ -75,14 +75,14 @@ export default function UserViewPage() {
         try {
             setIsActionLoading(true);
             if (user.userBlocked) {
-                await adminService.unblockUser(user.id);
+                await adminUserService.unblockUser(user.id);
                 toast.success('Пользователь разблокирован');
             } else {
-                await adminService.blockUser(user.id);
+                await adminUserService.blockUser(user.id);
                 toast.success('Пользователь заблокирован');
             }
             // Обновляем данные пользователя
-            const updatedUser = await adminService.getUserById(user.id);
+            const updatedUser = await adminUserService.getUserById(user.id);
             setUser(updatedUser);
         } catch (error) {
             handleError(error);

@@ -1,6 +1,12 @@
 // services/solutionService.ts
 
-import type {DailyActivityResponse, TaskStatisticsResponse, UserProgressResponse} from "@/types/solution.ts";
+import type {
+    DailyActivityResponse,
+    SolutionRequest,
+    SolutionResponse,
+    TaskStatisticsResponse,
+    UserProgressResponse
+} from "@/types/solution.ts";
 import {api} from "@/services/api.ts";
 import type {Page} from "@/types/page.ts";
 
@@ -22,6 +28,14 @@ export const solutionService = {
 
     async getUserStatistics(): Promise<TaskStatisticsResponse> {
         return api.get('/solutions/user/statistics');
+    },
+
+    async submit(data: SolutionRequest): Promise<SolutionResponse> {
+        return api.post(`/solutions`, data);
+    },
+
+    getById(id: string): Promise<SolutionResponse> {
+        return api.get(`/solutions/${id}`);
     },
 
     // === админский функционал ===

@@ -18,6 +18,7 @@ import AdminUsersPage from "@/pages/AdminUsersPage.tsx";
 import UserViewPage from "@/pages/UserViewPage.tsx";
 import AdminCreateTaskPage from "@/pages/AdminCreateTaskPage.tsx";
 import AdminTasksPage from "@/pages/AdminTasksPage.tsx";
+import InfiniteQueuePage from "@/pages/InfiniteQueuePage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -52,6 +53,10 @@ export const router = createBrowserRouter([
             {
                 path: '/profile',
                 element: <ProfilePage/>
+            },
+            {
+                path: '/task-stream',
+                element: <InfiniteQueuePage/>
             },
 
             {

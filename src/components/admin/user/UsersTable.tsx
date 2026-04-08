@@ -11,7 +11,7 @@ import {Input} from '@/components/ui/input.tsx';
 
 import {useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
-import {adminService} from '@/services/adminService.ts';
+import {adminUserService} from '@/services/adminUserService.ts';
 import {useError} from '@/hooks/useError.ts';
 
 import type {AdminUserResponse} from '@/types/user.ts';
@@ -68,10 +68,10 @@ export function UsersTable({
     const handleBlockUser = async (userId: string, isBlocked: boolean) => {
         try {
             if (isBlocked) {
-                await adminService.unblockUser(userId);
+                await adminUserService.unblockUser(userId);
                 toast.success('Пользователь разблокирован');
             } else {
-                await adminService.blockUser(userId);
+                await adminUserService.blockUser(userId);
                 toast.success('Пользователь заблокирован');
             }
 
@@ -83,7 +83,7 @@ export function UsersTable({
 
     const handleGrantAdmin = async (userId: string) => {
         try {
-            await adminService.grantAdmin(userId);
+            await adminUserService.grantAdmin(userId);
             toast.success('Права администратора выданы');
 
             onActionComplete();

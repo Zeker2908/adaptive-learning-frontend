@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {adminService} from '@/services/adminService';
+import {taskService} from '@/services/taskService';
 import {useError} from '@/hooks/useError';
 import {FileCode, Plus} from 'lucide-react';
 import {RootLayout} from '@/components/layout/RootLayout';
@@ -52,7 +52,7 @@ export default function AdminTasksPage() {
     const loadTasks = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await adminService.getTasks({
+            const response = await taskService.getTasks({
                 page,
                 size: sizeRef,
                 title: titleFilter.trim() || undefined, // ✅ используем дебансированное значение
