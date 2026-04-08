@@ -6,8 +6,59 @@ import {getLangById, LANGUAGES} from '@/types/languages';
 
 const STORAGE_KEY = 'infinite_queue_state';
 const STORAGE_TTL = 1000 * 60 * 60; // 1 час
-const BATCH_SIZE = 5;
-const MAX_RESULTS_PER_TASK = 5;
+const MAX_RESULTS_PER_TASK = 3;
+
+export function clearQueueStorage() {
+    if (typeof window === 'undefined') return;
+
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        console.log('[Queue] Storage cleared');
+    } catch (e) {
+        console.warn('[Queue] Failed to clear storage:', e);
+    }
+}
+
+function getInitialState(): QueueState {
+    return {
+        tasks: [],
+        currentIndex: 0,
+        lastUpdated: Date.now(),
+        codeCache: {},
+        taskResults: {},
+        solvedTasks: new Set<string>(),
+    };
+}
+
+function serializeState(state: QueueState) {
+    return {
+        ...state,
+        solvedTasks: Array.from(state.solvedTasks),
+    };
+}
+
+function deserializeState(raw: string): QueueState {
+    const parsed = JSON.parse(raw);
+
+    return {
+        ...parsed,
+        solvedTasks: new Set(parsed.solvedTasks || []),
+    };
+}
+
+function isTaskCompleted(taskId: string, state: QueueState): boolean {
+    const isSolved = state.solvedTasks.has(taskId);
+    const hasAttempts = (state.taskResults[taskId]?.length || 0) > 0;
+
+    // считаем завершённой, если либо solved, либо есть попытки (можешь ужесточить)
+    return isSolved || hasAttempts;
+}
+
+function isQueueCompleted(state: QueueState): boolean {
+    if (state.tasks.length === 0) return false;
+
+    return state.tasks.every(task => isTaskCompleted(task.id, state));
+}
 
 export function useQueueState(): UseQueueReturn {
     const [state, setState] = useState<QueueState>(() => loadFromStorage());
@@ -16,81 +67,90 @@ export function useQueueState(): UseQueueReturn {
 
     function loadFromStorage(): QueueState {
         try {
-            if (typeof window === 'undefined') {
-                return getInitialState();
-            }
+            if (typeof window === 'undefined') return getInitialState();
 
             const raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return getInitialState();
 
-            const parsed: QueueState = JSON.parse(raw);
+            const parsed = deserializeState(raw);
 
             if (Date.now() - parsed.lastUpdated > STORAGE_TTL) {
                 return getInitialState();
             }
 
-            return {
-                ...parsed,
-                solvedTasks: new Set(parsed.solvedTasks || []),
-            };
+            return parsed;
         } catch {
             return getInitialState();
         }
     }
 
-    function getInitialState(): QueueState {
-        return {
-            tasks: [],
-            currentIndex: 0,
-            lastUpdated: Date.now(),
-            codeCache: {},
-            taskResults: {},
-            solvedTasks: new Set<string>(),
-        };
-    }
-
     const saveToStorage = useCallback((newState: QueueState) => {
         if (typeof window === 'undefined') return;
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                ...newState,
-                lastUpdated: Date.now(),
-                // 🔹 Сериализуем Set как массив
-                solvedTasks: Array.from(newState.solvedTasks),
-            }));
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({
+                    ...serializeState(newState),
+                    lastUpdated: Date.now(),
+                })
+            );
         } catch (e) {
             console.warn('Failed to save queue state:', e);
         }
     }, []);
 
+
+    const reconcileState = useCallback((prev: QueueState, newTasks: QueueState['tasks'], append: boolean): QueueState => {
+        // 1. Merge задач без дублей
+        const taskMap = new Map<string, typeof newTasks[number]>();
+
+        if (append) {
+            prev.tasks.forEach(t => taskMap.set(t.id, t));
+        }
+
+        newTasks.forEach(t => taskMap.set(t.id, t));
+
+        const mergedTasks = Array.from(taskMap.values());
+
+        // 2. Фильтрация solvedTasks
+        const taskIds = new Set(mergedTasks.map(t => t.id));
+
+        const filteredSolved = new Set(
+            Array.from(prev.solvedTasks).filter(id => taskIds.has(id))
+        );
+
+        return {
+            ...prev,
+            tasks: mergedTasks,
+            currentIndex: append ? prev.currentIndex : 0,
+            solvedTasks: filteredSolved,
+            lastUpdated: Date.now(),
+        };
+    }, []);
+
     const loadTasks = useCallback(async (append = false) => {
         setIsLoading(true);
+
         try {
-            const newTasks = await recommendationService.getRecommendations(BATCH_SIZE);
-            const codingTasks = newTasks.filter(t => t.content.type === 'CODING');
+            const newTasks = await recommendationService.getRecommendations();
 
             setState(prev => {
-                const tasks = append ? [...prev.tasks, ...codingTasks] : codingTasks;
-                const newState: QueueState = {
-                    ...prev,
-                    tasks,
-                    currentIndex: append ? prev.currentIndex : 0,
-                    lastUpdated: Date.now(),
-                };
+                const newState = reconcileState(prev, newTasks, append);
+
                 saveToStorage(newState);
                 return newState;
             });
         } catch (error) {
-            console.error('Failed to load recommendations:', error);
+            console.error('[Queue] Failed to load:', error);
         } finally {
             setIsLoading(false);
         }
-    }, [saveToStorage]);
+    }, [reconcileState, saveToStorage]);
 
     const goToNext = useCallback(() => {
         setState(prev => {
             const nextIndex = Math.min(prev.currentIndex + 1, prev.tasks.length - 1);
-            const newState = { ...prev, currentIndex: nextIndex };
+            const newState = {...prev, currentIndex: nextIndex};
             saveToStorage(newState);
             return newState;
         });
@@ -106,14 +166,19 @@ export function useQueueState(): UseQueueReturn {
     }, [saveToStorage]);
 
     useEffect(() => {
-        if (
-            state.tasks.length > 0 &&
-            state.currentIndex >= state.tasks.length - 1 &&
-            !isLoading
-        ) {
+        const atEnd = state.currentIndex >= state.tasks.length - 1;
+        const hasTasks = state.tasks.length > 0;
+
+        if (hasTasks && atEnd && !isLoading) {
             loadTasks(true);
         }
     }, [state.currentIndex, state.tasks.length, isLoading, loadTasks]);
+
+    useEffect(() => {
+        if (state.tasks.length === 0) {
+            loadTasks();
+        }
+    }, [loadTasks, state.tasks.length]);
 
     const currentTask = state.tasks[state.currentIndex] || null;
 
@@ -135,8 +200,25 @@ export function useQueueState(): UseQueueReturn {
         setCode(getCodeForTask(currentTask.id, selectedLanguage));
     }, [currentTask, selectedLanguage, getCodeForTask]);
 
+    useEffect(() => {
+        if (isLoading) return;
+
+        const completed = isQueueCompleted(state);
+
+        if (completed && state.tasks.length > 0) {
+            console.log('[Queue] All tasks completed → resetting queue');
+
+            const newState = getInitialState();
+            setState(newState);
+            saveToStorage(newState);
+
+            loadTasks();
+        }
+    }, [state, isLoading, loadTasks, saveToStorage]);
+
     const handleCodeChange = useCallback((newCode: string) => {
         setCode(newCode);
+
         if (!currentTask) return;
 
         setState(prev => {
@@ -150,12 +232,12 @@ export function useQueueState(): UseQueueReturn {
                     },
                 },
             };
+
             saveToStorage(updated);
             return updated;
         });
     }, [currentTask, selectedLanguage, saveToStorage]);
 
-    // 🔹 Добавить результат решения
     const addSubmissionResult = useCallback((taskId: string, result: SubmissionResult) => {
         setState(prev => {
             const currentResults = prev.taskResults[taskId] || [];
@@ -168,12 +250,12 @@ export function useQueueState(): UseQueueReturn {
                     [taskId]: updatedResults,
                 },
             };
+
             saveToStorage(newState);
             return newState;
         });
     }, [saveToStorage]);
 
-    // 🔹 Пометить задачу как решённую
     const markTaskAsSolved = useCallback((taskId: string) => {
         setState(prev => {
             const newSolved = new Set(prev.solvedTasks);
@@ -183,21 +265,15 @@ export function useQueueState(): UseQueueReturn {
                 ...prev,
                 solvedTasks: newSolved,
             };
+
             saveToStorage(newState);
             return newState;
         });
     }, [saveToStorage]);
 
-    // 🔹 Вычисляемые значения для текущей задачи
     const taskResults = currentTask ? (state.taskResults[currentTask.id] || []) : [];
     const isTaskSolved = currentTask ? state.solvedTasks.has(currentTask.id) : false;
     const canSubmit = currentTask ? !isTaskSolved : false;
-
-    useEffect(() => {
-        if (state.tasks.length === 0) {
-            loadTasks();
-        }
-    }, [loadTasks, state.tasks.length]);
 
     return {
         tasks: state.tasks,
@@ -222,7 +298,6 @@ export function useQueueState(): UseQueueReturn {
         isQueueEmpty: state.tasks.length === 0,
         isLastTask: state.currentIndex === state.tasks.length - 1,
 
-        // 🔹 Результаты и блокировка
         taskResults,
         isTaskSolved,
         canSubmit,

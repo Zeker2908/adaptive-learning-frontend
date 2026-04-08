@@ -1,12 +1,13 @@
 // types/queue.ts
 import type { TaskResponse } from '@/types/task';
-import type { SolutionStatus, Language as BackendLanguage } from '@/types/solution';
+import type {SolutionStatus, Language as BackendLanguage} from '@/types/solution';
 
 export interface SubmissionResult {
     id: string;
     status: SolutionStatus;
     feedback: string;
-    language: BackendLanguage;
+    answer?: string;
+    language?: BackendLanguage;
     submittedAt: number;
 }
 
@@ -15,9 +16,7 @@ export interface QueueState {
     currentIndex: number;
     lastUpdated: number;
     codeCache: Record<string, Record<string, string>>;
-    // 🔹 Результаты по задачам: taskId -> массив последних 3 решений
     taskResults: Record<string, SubmissionResult[]>;
-    // 🔹 Решённые задачи (нельзя отправить повторно)
     solvedTasks: Set<string>;
 }
 

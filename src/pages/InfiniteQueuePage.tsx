@@ -3,9 +3,10 @@ import { RootLayout } from '@/components/layout/RootLayout';
 import { Card } from '@/components/ui/card';
 import { TaskDescription } from '@/components/queue/TaskDescription';
 import { CodeEditorPanel } from '@/components/queue/CodeEditorPanel';
+import { ChoiceTaskPanel } from '@/components/queue/ChoiceTaskPanel'; // 🔹 Новый импорт
 import { TaskNavigator } from '@/components/queue/TaskNavigator';
 import { Loader2, Infinity } from 'lucide-react';
-import {useQueueState} from "@/hooks/useQueueState.ts";
+import { useQueueState } from "@/hooks/useQueueState";
 
 export default function InfiniteQueuePage() {
     const {
@@ -20,17 +21,14 @@ export default function InfiniteQueuePage() {
         setCode,
         isLoading,
         isQueueEmpty,
-
         taskResults,
         isTaskSolved,
         markTaskAsSolved,
         addSubmissionResult,
     } = useQueueState();
 
-    // 🔹 Обработчик успешного решения
     const handleTaskSolved = (taskId: string) => {
         markTaskAsSolved(taskId);
-        // 🔹 Авто-переход с небольшой задержкой, чтобы пользователь увидел тост
         setTimeout(() => {
             goToNext();
         }, 1500);
@@ -81,7 +79,7 @@ export default function InfiniteQueuePage() {
                     </div>
                 </div>
 
-                {/* Navigation (без счётчика) */}
+                {/* Navigation */}
                 <TaskNavigator
                     onPrevious={goToPrevious}
                     onNext={goToNext}
@@ -91,38 +89,46 @@ export default function InfiniteQueuePage() {
                 />
 
                 {/* Main content grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[600px]">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-150">
                     {/* Left: Task description */}
                     <div className="space-y-4">
                         {currentTask && <TaskDescription task={currentTask} />}
                     </div>
 
-                    {/* Right: Code editor */}
+                    {/* Right: Task panel (conditional) */}
                     <Card className="p-4">
                         {currentTask && (
-                            <CodeEditorPanel
-                                task={currentTask}
-                                code={code}
-                                onCodeChange={setCode}
-                                selectedLanguage={selectedLanguage}
-                                onLanguageChange={setSelectedLanguage}
-                                isTaskSolved={isTaskSolved}
-                                taskResults={taskResults}
-                                onSolved={handleTaskSolved}
-                                onResult={addSubmissionResult}
-                            />
+                            <>
+                                {/* 🔹 CODING задачи */}
+                                {currentTask.content.type === 'CODING' && (
+                                    <CodeEditorPanel
+                                        task={currentTask}
+                                        code={code}
+                                        onCodeChange={setCode}
+                                        selectedLanguage={selectedLanguage}
+                                        onLanguageChange={setSelectedLanguage}
+                                        isTaskSolved={isTaskSolved}
+                                        taskResults={taskResults}
+                                        onSolved={handleTaskSolved}
+                                        onResult={addSubmissionResult}
+                                    />
+                                )}
+
+                                {/* 🔹 CHOICE задачи (одиночный или множественный выбор) */}
+                                {(currentTask.content.type === 'SINGLE_CHOICE' ||
+                                    currentTask.content.type === 'MULTIPLE_CHOICE') && (
+                                    <ChoiceTaskPanel
+                                        task={currentTask}
+                                        isTaskSolved={isTaskSolved}
+                                        taskResults={taskResults}
+                                        onSolved={handleTaskSolved}
+                                        onResult={addSubmissionResult}
+                                    />
+                                )}
+                            </>
                         )}
                     </Card>
                 </div>
-
-                {/* Bottom navigation */}
-                <TaskNavigator
-                    onPrevious={goToPrevious}
-                    onNext={goToNext}
-                    canPrevious={canGoPrevious}
-                    canNext={canGoNext}
-                    isLoadingMore={isLoading}
-                />
             </div>
         </RootLayout>
     );

@@ -1,4 +1,4 @@
-import {useCallback, useMemo} from 'react';
+import {useCallback, useEffect, useMemo} from 'react';
 import Editor from '@monaco-editor/react';
 import {Button} from '@/components/ui/button';
 import {CheckCircle2, Loader2, Send} from 'lucide-react';
@@ -39,22 +39,39 @@ export function CodeEditorPanel({
         feedback,
         isSubmitting,
         submitSolution,
-    } = useSubmissionPolling({onSolved, onResult});
+        resetSubmission
+    } = useSubmissionPolling({ onSolved, onResult });
 
-    const langConfig = useMemo(
-        () => getLangById(selectedLanguage),
-        [selectedLanguage]
-    );
+    const MAX_FAILED_ATTEMPTS = 3;
+
+    const failedAttempts = useMemo(() => {
+        return taskResults.filter(r => r.status === 'FAILED').length;
+    }, [taskResults]);
+
+    const remainingAttempts = MAX_FAILED_ATTEMPTS - failedAttempts;
+
+
+    const langConfig = useMemo(() => getLangById(selectedLanguage), [selectedLanguage]);
+
+    useEffect(() => {
+        resetSubmission();
+    }, [task.id, resetSubmission]);
+
+    const isAttemptsExceeded = failedAttempts >= MAX_FAILED_ATTEMPTS;
 
     const isPending = submissionStatus === 'PENDING';
 
-    const isLocked = isSubmitting || isPending || isTaskSolved;
+    const isLocked = isSubmitting || isPending || isTaskSolved || isAttemptsExceeded;
 
     const handleSubmit = useCallback(() => {
+        if (isAttemptsExceeded) {
+            return;
+        }
+
         if (!code.trim() || isLocked) return;
 
         submitSolution(task.id, code, langConfig.backend);
-    }, [task.id, code, langConfig.backend, submitSolution, isLocked]);
+    }, [task.id, code, langConfig.backend, submitSolution, isLocked, isAttemptsExceeded]);
 
     const handleEditorChange = useCallback((val: string | undefined) => {
         if (!isTaskSolved) {
@@ -119,6 +136,16 @@ export function CodeEditorPanel({
                     }}
                 />
             </div>
+
+            {isAttemptsExceeded ? (
+                <p className="text-xs text-red-500">
+                    Достигнут лимит попыток
+                </p>
+            ) : (
+                <p className="text-xs text-muted-foreground">
+                    Осталось попыток: {remainingAttempts}
+                </p>
+            )}
 
             {/* HISTORY */}
             {taskResults.length > 0 && (

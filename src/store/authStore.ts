@@ -4,6 +4,7 @@ import {persist} from 'zustand/middleware';
 import {authService} from '@/services/authService';
 import {useUserStore} from './userStore';
 import type {ConfirmationEmailRequest, LoginRequest} from '@/types/auth';
+import {clearQueueStorage} from "@/hooks/useQueueState.ts";
 
 interface AuthState {
     token: string | null;
@@ -37,6 +38,7 @@ export const useAuthStore = create<AuthState>()(
                     set({token: null, isAuthenticated: false});
                     useUserStore.getState().clearUser();
                 });
+                clearQueueStorage();
             },
 
             logoutAll: () => {
@@ -44,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
                     set({token: null, isAuthenticated: false});
                     useUserStore.getState().clearUser();
                 });
+                clearQueueStorage();
             },
 
             setToken: (token) => set({token, isAuthenticated: true}),

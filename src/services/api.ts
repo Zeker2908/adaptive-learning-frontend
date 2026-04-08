@@ -68,7 +68,7 @@ export const api = {
 
                     try {
                         // Пытаемся обновить токен
-                        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                        const refreshResponse = await fetch(`/api/v1/auth/refresh`, {
                             method: 'POST',
                             credentials: 'include', // Важно для cookies
                         });

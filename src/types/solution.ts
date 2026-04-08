@@ -22,7 +22,7 @@ export interface TaskStatisticsResponse {
 export interface SolutionRequest {
     taskId: string;
     answer: string;
-    language: Language;
+    language?: Language;
 }
 
 export interface SolutionResponse {
