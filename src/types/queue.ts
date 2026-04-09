@@ -1,6 +1,6 @@
 // types/queue.ts
-import type { TaskResponse } from '@/types/task';
-import type {SolutionStatus, Language as BackendLanguage} from '@/types/solution';
+import type {TaskResponse} from '@/types/task';
+import type {Language as BackendLanguage, SolutionStatus} from '@/types/solution';
 
 export interface SubmissionResult {
     id: string;
@@ -18,6 +18,13 @@ export interface QueueState {
     codeCache: Record<string, Record<string, string>>;
     taskResults: Record<string, SubmissionResult[]>;
     solvedTasks: Set<string>;
+    stats: QueueStats
+}
+
+export interface QueueStats {
+    solved: number;
+    failed: number;
+    streak: number;
 }
 
 export interface SubmissionState {
@@ -34,6 +41,9 @@ export interface UseQueueReturn {
     currentTask: TaskResponse | null;
     currentIndex: number;
     totalLoaded: number;
+
+    stats: QueueStats;
+    updateStats: (status: SolutionStatus) => void;
 
     // Навигация
     goToNext: () => void;

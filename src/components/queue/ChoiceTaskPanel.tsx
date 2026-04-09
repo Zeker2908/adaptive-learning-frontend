@@ -6,14 +6,14 @@ import {OptionItem} from './OptionItem';
 import {SubmissionStatus} from './SubmissionStatus';
 import type {MultipleChoiceTaskContent, SingleChoiceTaskContent, TaskResponse} from '@/types/task';
 import type {SubmissionResult} from '@/types/queue';
-import {SolutionStatusLabels} from '@/types/solution';
+import {type SolutionStatus, SolutionStatusLabels} from '@/types/solution';
 import {useChoiceSubmission} from "@/hooks/useChoiceSubmission.ts";
 
 interface Props {
     task: TaskResponse;
     isTaskSolved: boolean;
     taskResults: SubmissionResult[];
-    onSolved: (taskId: string, solutionId: string) => void;
+    onSolved: (taskId: string, status: SolutionStatus) => void;
     onResult: (taskId: string, result: SubmissionResult) => void;
 }
 
@@ -31,23 +31,33 @@ export function ChoiceTaskPanel({
     const failedAttempts = taskResults.filter(r => r.status === 'FAILED').length;
     const isAttemptsExceeded = failedAttempts >= MAX_ATTEMPTS;
 
+    const hasHandledExceededRef = useRef(false);
+
     const {submissionStatus, feedback, isSubmitting, submitAnswer, resetSubmission} =
         useChoiceSubmission({onSolved, onResult});
 
     const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
-    // 🔹 FIX: Ref для отслеживания, восстановили ли мы уже выбор для текущей задачи
     const hasRestoredRef = useRef(false);
 
     // 🔹 Сбрасываем флаг при смене задачи
     useEffect(() => {
-        hasRestoredRef.current = false;
-        setSelectedIndices([]); // 🔹 Очищаем выбор при новой задаче
+        hasHandledExceededRef.current = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedIndices([]);
     }, [task.id]);
 
     useEffect(() => {
         resetSubmission();
     }, [task.id, resetSubmission])
+
+    useEffect(() => {
+        if (isAttemptsExceeded && !hasHandledExceededRef.current) {
+            hasHandledExceededRef.current = true;
+
+            onSolved(task.id, 'FAILED');
+        }
+    }, [isAttemptsExceeded, onSolved, task.id]);
 
     // 🔹 Восстанавливаем выбор из истории (только один раз за задачу)
     useEffect(() => {
@@ -68,6 +78,7 @@ export function ChoiceTaskPanel({
                 const indices = Array.isArray(parsed) ? parsed : [parsed];
 
                 if (indices.length > 0 && indices.every(n => Number.isInteger(n))) {
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
                     setSelectedIndices(indices);
                     hasRestoredRef.current = true; // 🔹 Помечаем как восстановленное
                 }
@@ -75,7 +86,7 @@ export function ChoiceTaskPanel({
                 // Игнорируем ошибки парсинга
             }
         }
-    }, [taskResults]); // 🔹 Убрали selectedIndices.length из зависимостей
+    }, [taskResults]);
 
     const handleSelect = useCallback((index: number) => {
         if (isTaskSolved || isSubmitting) return;
@@ -116,9 +127,9 @@ export function ChoiceTaskPanel({
     const canSubmit = selectedIndices.length > 0 && !isLocked;
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col">
             {/* HEADER */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 shrink-0">
                 <h3 className="font-medium flex items-center gap-2">
                     {isMultiple ? '🔘 Несколько вариантов' : '🔘 Один вариант'}
                     {isTaskSolved && (
@@ -129,13 +140,8 @@ export function ChoiceTaskPanel({
                 </h3>
             </div>
 
-            {/* QUESTION */}
-            <div className="mb-4 p-4 bg-muted/30 rounded-md border">
-                <p className="text-sm leading-relaxed">{content.question}</p>
-            </div>
-
             {/* OPTIONS */}
-            <div className="flex-1 space-y-2 mb-4 overflow-y-auto max-h-75">
+            <div className="space-y-2 mb-4">
                 {content.options.map((option, index) => (
                     <OptionItem
                         key={index}
@@ -151,7 +157,7 @@ export function ChoiceTaskPanel({
 
             {/* HISTORY */}
             {taskResults.length > 0 && (
-                <div className="mb-4 p-3 bg-muted/30 rounded-md border">
+                <div className="mb-4 p-3 bg-muted/30 rounded-md border shrink-0">
                     <div className="text-xs font-medium text-muted-foreground mb-2">
                         Последние попытки ({taskResults.length})
                     </div>
@@ -185,7 +191,7 @@ export function ChoiceTaskPanel({
 
 
             {/* ACTIONS */}
-            <div className="space-y-3">
+            <div className="space-y-3 mt-auto">
                 {isAttemptsExceeded && (
                     <p className="text-xs text-red-500">
                         Достигнут лимит попыток

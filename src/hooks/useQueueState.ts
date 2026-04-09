@@ -3,10 +3,12 @@ import {useCallback, useEffect, useState} from 'react';
 import {recommendationService} from '@/services/recommendationService';
 import type {QueueState, SubmissionResult, UseQueueReturn} from '@/types/queue';
 import {getLangById, LANGUAGES} from '@/types/languages';
+import type {SolutionStatus} from "@/types/solution.ts";
 
 const STORAGE_KEY = 'infinite_queue_state';
 const STORAGE_TTL = 1000 * 60 * 60; // 1 час
 const MAX_RESULTS_PER_TASK = 3;
+const MAX_ATTEMPTS = 3;
 
 export function clearQueueStorage() {
     if (typeof window === 'undefined') return;
@@ -27,6 +29,11 @@ function getInitialState(): QueueState {
         codeCache: {},
         taskResults: {},
         solvedTasks: new Set<string>(),
+        stats: {
+            solved: 0,
+            failed: 0,
+            streak: 0,
+        },
     };
 }
 
@@ -48,10 +55,9 @@ function deserializeState(raw: string): QueueState {
 
 function isTaskCompleted(taskId: string, state: QueueState): boolean {
     const isSolved = state.solvedTasks.has(taskId);
-    const hasAttempts = (state.taskResults[taskId]?.length || 0) > 0;
+    const attempts = state.taskResults[taskId]?.length || 0;
 
-    // считаем завершённой, если либо solved, либо есть попытки (можешь ужесточить)
-    return isSolved || hasAttempts;
+    return isSolved || attempts >= MAX_ATTEMPTS;
 }
 
 function isQueueCompleted(state: QueueState): boolean {
@@ -160,6 +166,24 @@ export function useQueueState(): UseQueueReturn {
         setState(prev => {
             const prevIndex = Math.max(prev.currentIndex - 1, 0);
             const newState = {...prev, currentIndex: prevIndex};
+            saveToStorage(newState);
+            return newState;
+        });
+    }, [saveToStorage]);
+
+    const updateStats = useCallback((status: SolutionStatus) => {
+        setState(prev => {
+            const isSuccess = status === 'SUCCESS';
+
+            const newState = {
+                ...prev,
+                stats: {
+                    solved: prev.stats.solved + (isSuccess ? 1 : 0),
+                    failed: prev.stats.failed + (!isSuccess ? 1 : 0),
+                    streak: isSuccess ? prev.stats.streak + 1 : 0,
+                },
+            };
+
             saveToStorage(newState);
             return newState;
         });
@@ -280,6 +304,9 @@ export function useQueueState(): UseQueueReturn {
         currentTask,
         currentIndex: state.currentIndex,
         totalLoaded: state.tasks.length,
+
+        stats: state.stats,
+        updateStats,
 
         goToNext,
         goToPrevious,

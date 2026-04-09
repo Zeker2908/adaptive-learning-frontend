@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo} from 'react';
+import {useCallback, useEffect, useMemo, useRef} from 'react';
 import Editor from '@monaco-editor/react';
 import {Button} from '@/components/ui/button';
 import {CheckCircle2, Loader2, Send} from 'lucide-react';
@@ -8,7 +8,7 @@ import {getLangById} from '@/types/languages';
 import type {TaskResponse} from '@/types/task';
 import type {SubmissionResult} from '@/types/queue';
 import {useSubmissionPolling} from "@/hooks/useSubmissionPolling";
-import {type Language, SolutionStatusLabels} from "@/types/solution";
+import {type Language, type SolutionStatus, SolutionStatusLabels} from "@/types/solution";
 
 interface Props {
     task: TaskResponse;
@@ -18,9 +18,11 @@ interface Props {
     onLanguageChange: (langId: string) => void;
     isTaskSolved: boolean;
     taskResults: SubmissionResult[];
-    onSolved: (taskId: string, solutionId: string) => void;
+    onSolved: (taskId: string, status: SolutionStatus) => void;
     onResult: (taskId: string, result: SubmissionResult) => void;
 }
+
+const MAX_FAILED_ATTEMPTS = 3;
 
 export function CodeEditorPanel({
                                     task,
@@ -42,20 +44,29 @@ export function CodeEditorPanel({
         resetSubmission
     } = useSubmissionPolling({ onSolved, onResult });
 
-    const MAX_FAILED_ATTEMPTS = 3;
+    const hasHandledExceededRef = useRef(false);
 
     const failedAttempts = useMemo(() => {
         return taskResults.filter(r => r.status === 'FAILED').length;
     }, [taskResults]);
-
-    const remainingAttempts = MAX_FAILED_ATTEMPTS - failedAttempts;
-
-
     const langConfig = useMemo(() => getLangById(selectedLanguage), [selectedLanguage]);
+
+    useEffect(() => {
+        hasHandledExceededRef.current = false;
+    }, [task.id]);
 
     useEffect(() => {
         resetSubmission();
     }, [task.id, resetSubmission]);
+
+    useEffect(() => {
+        // 🔹 Проверяем: лимит превышен И ещё не обработали для этой задачи
+        if (failedAttempts >= MAX_FAILED_ATTEMPTS && !hasHandledExceededRef.current) {
+            hasHandledExceededRef.current = true; // 🔹 Блокируем повторные вызовы
+
+            onSolved(task.id, 'FAILED');
+        }
+    }, [failedAttempts, onSolved, task.id]);
 
     const isAttemptsExceeded = failedAttempts >= MAX_FAILED_ATTEMPTS;
 
@@ -103,7 +114,7 @@ export function CodeEditorPanel({
             </div>
 
             {/* EDITOR */}
-            <div className="flex-1 border rounded-md overflow-hidden mb-4 relative">
+            <div className="flex-1 border rounded-md overflow-hidden mb-4 relative min-h-[400px]">
 
                 {isTaskSolved && (
                     <div
@@ -142,9 +153,16 @@ export function CodeEditorPanel({
                     Достигнут лимит попыток
                 </p>
             ) : (
-                <p className="text-xs text-muted-foreground">
-                    Осталось попыток: {remainingAttempts}
-                </p>
+                <div className="flex gap-1 mb-2">
+                    {Array.from({ length: MAX_FAILED_ATTEMPTS }).map((_, i) => (
+                        <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full ${
+                                i < failedAttempts ? 'bg-red-500' : 'bg-gray-300'
+                            }`}
+                        />
+                    ))}
+                </div>
             )}
 
             {/* HISTORY */}

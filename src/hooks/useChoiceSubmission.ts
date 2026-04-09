@@ -15,7 +15,7 @@ interface UseChoiceSubmissionReturn {
 }
 
 interface UseChoiceSubmissionProps {
-    onSolved?: (taskId: string, solutionId: string) => void;
+    onSolved?: (taskId: string, status: SolutionStatus) => void;
     onResult?: (taskId: string, result: SubmissionResult) => void;
 }
 
@@ -70,7 +70,7 @@ export function useChoiceSubmission({
 
             if (result.status === 'SUCCESS') {
                 toast.success('Верно! 🎉');
-                onSolved?.(taskId, result.id);
+                onSolved?.(taskId, result.status);
             } else if (result.status === 'FAILED') {
                 toast.error('Неверный ответ');
             } else {

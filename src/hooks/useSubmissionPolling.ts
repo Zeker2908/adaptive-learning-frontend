@@ -4,7 +4,7 @@ import {toast} from 'sonner';
 import {solutionService} from '@/services/solutionService';
 import type {SubmissionResult} from "@/types/queue";
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 1000;
 const MAX_POLL_ATTEMPTS = 30;
 
 interface UseSubmissionReturn {
@@ -21,7 +21,7 @@ interface UseSubmissionReturn {
 }
 
 interface UseSubmissionPollingProps {
-    onSolved?: (taskId: string, solutionId: string) => void;
+    onSolved?: (taskId: string, status: SolutionStatus) => void;
     onResult?: (taskId: string, result: SubmissionResult) => void;
 }
 
@@ -108,7 +108,7 @@ export function useSubmissionPolling({
 
             if (result.status === 'SUCCESS') {
                 toast.success('Решение принято! 🎉');
-                onSolved?.(taskId, solutionId);
+                onSolved?.(taskId, result.status);
             } else if (result.status === 'FAILED') {
                 toast.error('Решение не прошло проверку');
             } else {
