@@ -8,6 +8,37 @@ import {oauthService} from '@/services/oauthService';
 import {useEffect} from 'react';
 import {toast} from 'sonner';
 
+// 🔹 Импорт анимаций
+import {motion} from 'framer-motion';
+
+// 🔹 Варианты анимаций (вынесены для чистоты кода)
+const containerVariants = {
+    hidden: {opacity: 0},
+    visible: {
+        opacity: 1,
+        transition: {staggerChildren: 0.1, delayChildren: 0.15},
+    },
+};
+
+const itemVariants = {
+    hidden: {opacity: 0, y: 16},
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {duration: 0.35, ease: [0.22, 1, 0.36, 1] as [number, number, number, number]},
+    },
+};
+
+const buttonHover = {
+    scale: 1.02,
+    transition: {duration: 0.15},
+};
+
+const buttonTap = {
+    scale: 0.98,
+    transition: {duration: 0.1},
+};
+
 export default function LoginPage() {
     const location = useLocation();
 
@@ -29,41 +60,67 @@ export default function LoginPage() {
             title="Добро пожаловать"
             description="Войдите в свой аккаунт для продолжения"
         >
-            <LoginForm/>
-
-            <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">Или продолжите с</span>
-                </div>
-            </div>
-
-            <Button
-                type="button"
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 mb-4"
-                onClick={handleGoogleLogin}
+            {/* 🔹 Контейнер с каскадной анимацией */}
+            <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="space-y-4"
             >
-                <FcGoogle className="h-5 w-5"/>
-                Войти с Google
-            </Button>
+                {/* 🔹 LoginForm */}
+                <motion.div variants={itemVariants}>
+                    <LoginForm/>
+                </motion.div>
 
-            <div className="text-center text-sm space-y-2">
-                <p>
-                    <span className="text-muted-foreground">Забыли пароль? </span>
-                    <Link to="/forgot-password" className="text-primary hover:underline font-medium">
-                        Восстановить
-                    </Link>
-                </p>
-                <p>
-                    <span className="text-muted-foreground">Нет аккаунта? </span>
-                    <Link to="/register" className="text-primary hover:underline font-medium">
-                        Зарегистрироваться
-                    </Link>
-                </p>
-            </div>
+                {/* 🔹 Divider "Или продолжите с" */}
+                <motion.div variants={itemVariants} className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500">Или продолжите с</span>
+                    </div>
+                </motion.div>
+
+                {/* 🔹 Кнопка Google с микро-анимацией */}
+                <motion.div
+                    variants={itemVariants}
+                    whileHover={buttonHover}
+                    whileTap={buttonTap}
+                >
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full flex items-center justify-center gap-2 mb-4"
+                        onClick={handleGoogleLogin}
+                    >
+                        <FcGoogle className="h-5 w-5"/>
+                        Войти с Google
+                    </Button>
+                </motion.div>
+
+                {/* 🔹 Футер с ссылками */}
+                <motion.div variants={itemVariants} className="text-center text-sm space-y-2">
+                    <p>
+                        <span className="text-muted-foreground">Забыли пароль? </span>
+                        <Link
+                            to="/forgot-password"
+                            className="text-primary hover:underline font-medium"
+                        >
+                            Восстановить
+                        </Link>
+                    </p>
+                    <p>
+                        <span className="text-muted-foreground">Нет аккаунта? </span>
+                        <Link
+                            to="/register"
+                            className="text-primary hover:underline font-medium"
+                        >
+                            Зарегистрироваться
+                        </Link>
+                    </p>
+                </motion.div>
+            </motion.div>
         </AuthLayout>
     );
 }
