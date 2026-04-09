@@ -3,11 +3,14 @@ import {useCallback, useEffect, useState} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {adminUserService} from '@/services/adminUserService.ts';
 import {useError} from '@/hooks/useError';
-import {Users} from 'lucide-react';
+import {Loader2, Users} from 'lucide-react';
 import {RootLayout} from '@/components/layout/RootLayout';
 import {UsersTable} from '@/components/admin/user/UsersTable.tsx';
 import type {AdminUserResponse} from '@/types/user';
 import type {Page} from "@/types/page.ts";
+
+// 🔹 Импорт анимаций
+import {motion} from 'framer-motion';
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<Page<AdminUserResponse>>({
@@ -102,20 +105,32 @@ export default function AdminUsersPage() {
             } finally {
                 setIsSearching(false);
             }
-        }, 300); // лучше 300мс
+        }, 300);
 
         return () => clearTimeout(timeout);
     }, [search, handleError]);
 
     useEffect(() => {
-        if (!search.trim())
-        loadUsers();
+        if (!search.trim()) {
+            loadUsers();
+        }
     }, [loadUsers, search]);
 
     return (
         <RootLayout>
-            <div className="max-w-7xl mx-auto space-y-6">
-                <div>
+            {/* 🔹 Основной контейнер с fade-in */}
+            <motion.div
+                initial={{opacity: 0}}
+                animate={{opacity: 1}}
+                transition={{duration: 0.25}}
+                className="max-w-7xl mx-auto space-y-6"
+            >
+                {/* 🔹 Заголовок с slide-up */}
+                <motion.div
+                    initial={{opacity: 0, y: 12}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.3, delay: 0.05}}
+                >
                     <h1 className="text-3xl font-bold flex items-center gap-3">
                         <Users className="h-8 w-8"/>
                         Управление пользователями
@@ -123,51 +138,75 @@ export default function AdminUsersPage() {
                     <p className="text-muted-foreground mt-1">
                         Поиск, просмотр и управление всеми пользователями платформы
                     </p>
-                </div>
+                </motion.div>
 
-                {/* Список всех пользователей */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Users className="h-5 w-5"/>
-                            Все пользователи
-                        </CardTitle>
-                        <CardDescription>
-                            Кликните на пользователя, чтобы просмотреть его профиль и статистику
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="flex justify-center p-12">
-                                <div className="flex flex-col items-center gap-3">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-                                    <p className="text-muted-foreground">Загрузка пользователей...</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <UsersTable
-                                users={displayedUsers}
-                                search={search}
-                                onSearchChange={setSearch}
-                                isSearching={isSearching}
+                {/* 🔹 Карточка с таблицей */}
+                <motion.div
+                    initial={{opacity: 0, y: 12}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.3, delay: 0.15}}
+                >
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Users className="h-5 w-5"/>
+                                Все пользователи
+                            </CardTitle>
+                            <CardDescription>
+                                Кликните на пользователя, чтобы просмотреть его профиль и статистику
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {/* 🔹 Лоадер внутри карточки (при пагинации/сортировке) */}
+                            {isLoading ? (
+                                <motion.div
+                                    initial={{opacity: 0}}
+                                    animate={{opacity: 1}}
+                                    className="flex justify-center p-12"
+                                >
+                                    <div className="flex flex-col items-center gap-3">
+                                        <motion.div
+                                            animate={{rotate: 360}}
+                                            transition={{duration: 1, repeat: Infinity, ease: "linear"}}
+                                            className="inline-block"
+                                        >
+                                            <Loader2 className="h-8 w-8 text-primary"/>
+                                        </motion.div>
+                                        <motion.p
+                                            initial={{opacity: 0, y: 4}}
+                                            animate={{opacity: 1, y: 0}}
+                                            transition={{delay: 0.1}}
+                                            className="text-muted-foreground"
+                                        >
+                                            {isSearching ? 'Поиск...' : 'Обновление данных...'}
+                                        </motion.p>
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                <UsersTable
+                                    users={displayedUsers}
+                                    search={search}
+                                    onSearchChange={setSearch}
+                                    isSearching={isSearching}
 
-                                onActionComplete={handleActionComplete}
-                                selectedUserId={selectedUser?.id}
-                                sortField={sortField}
-                                sortDirection={sortDirection}
-                                onSort={handleSort}
-                                page={page}
-                                onPageChange={setPage}
+                                    onActionComplete={handleActionComplete}
+                                    selectedUserId={selectedUser?.id}
+                                    sortField={sortField}
+                                    sortDirection={sortDirection}
+                                    onSort={handleSort}
+                                    page={page}
+                                    onPageChange={setPage}
 
-                                totalPages={users.totalPages}
-                                totalElements={users.totalElements}
-                                first={users.first}
-                                last={users.last}
-                            />
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                                    totalPages={users.totalPages}
+                                    totalElements={users.totalElements}
+                                    first={users.first}
+                                    last={users.last}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            </motion.div>
         </RootLayout>
     );
 }

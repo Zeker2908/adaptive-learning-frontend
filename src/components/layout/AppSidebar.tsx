@@ -17,6 +17,7 @@ import {useToast} from "@/hooks/useToast.ts";
 import {useUserStore} from '@/store/userStore';
 import logo from '@/assets/logo.svg';
 import {useState} from 'react';
+import {AnimatePresence, motion} from "framer-motion";
 
 const items = [
     {title: "Главная", url: "/dashboard", icon: Home},
@@ -126,40 +127,73 @@ export function AppSidebar() {
                                 <div className="flex items-center gap-3">
                                     <LogOut className="h-5 w-5"/>
                                     <span>
-                                        {isLogoutExpanded ? 'Выберите действие' : 'Выйти'}
-                                    </span>
+                            {isLogoutExpanded ? 'Выберите действие' : 'Выйти'}
+                        </span>
                                 </div>
 
-                                {isLogoutExpanded ? (
-                                    <ChevronUp className="h-4 w-4"/>
-                                ) : (
-                                    <ChevronDown className="h-4 w-4"/>
-                                )}
+                                {/* 🔹 Анимированный чекрон */}
+                                <motion.div
+                                    animate={{rotate: isLogoutExpanded ? 180 : 0}}
+                                    transition={{duration: 0.2}}
+                                >
+                                    {isLogoutExpanded ? (
+                                        <ChevronUp className="h-4 w-4"/>
+                                    ) : (
+                                        <ChevronDown className="h-4 w-4"/>
+                                    )}
+                                </motion.div>
                             </SidebarMenuButton>
 
-                            {isLogoutExpanded && (
-                                <div className="pl-8 space-y-1">
-                                    <button
-                                        onClick={showSuccessToast(
-                                            handleLogout,
-                                            'Вы успешно вышли из аккаунта'
-                                        )}
-                                        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent transition-colors"
+                            {/* 🔹 Анимированный выпадающий список */}
+                            <AnimatePresence initial={false}>
+                                {isLogoutExpanded && (
+                                    <motion.div
+                                        key="logout-options"
+                                        initial={{opacity: 0, height: 0, y: -4}}
+                                        animate={{opacity: 1, height: 'auto', y: 0}}
+                                        exit={{opacity: 0, height: 0, y: -4}}
+                                        transition={{duration: 0.2}}
+                                        className="overflow-hidden"
                                     >
-                                        <span>• Текущая сессия</span>
-                                    </button>
+                                        <div className="pl-8 pt-1 space-y-1">
+                                            {/* 🔹 Кнопки с каскадным появлением */}
+                                            <motion.div
+                                                initial={{opacity: 0, x: -8}}
+                                                animate={{opacity: 1, x: 0}}
+                                                transition={{delay: 0.05}}
+                                            >
+                                                <button
+                                                    onClick={showSuccessToast(
+                                                        handleLogout,
+                                                        'Вы успешно вышли из аккаунта'
+                                                    )}
+                                                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent transition-colors text-left"
+                                                >
+                                                    <span className="text-muted-foreground">•</span>
+                                                    <span>Текущая сессия</span>
+                                                </button>
+                                            </motion.div>
 
-                                    <button
-                                        onClick={showSuccessToast(
-                                            handleLogoutAll,
-                                            'Вы вышли со всех устройств'
-                                        )}
-                                        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent transition-colors text-destructive"
-                                    >
-                                        <span>• Все устройства</span>
-                                    </button>
-                                </div>
-                            )}
+                                            <motion.div
+                                                initial={{opacity: 0, x: -8}}
+                                                animate={{opacity: 1, x: 0}}
+                                                transition={{delay: 0.1}}
+                                            >
+                                                <button
+                                                    onClick={showSuccessToast(
+                                                        handleLogoutAll,
+                                                        'Вы вышли со всех устройств'
+                                                    )}
+                                                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent transition-colors text-destructive text-left"
+                                                >
+                                                    <span>•</span>
+                                                    <span>Все устройства</span>
+                                                </button>
+                                            </motion.div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </SidebarMenuItem>
 

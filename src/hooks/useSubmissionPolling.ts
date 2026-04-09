@@ -103,18 +103,11 @@ export function useSubmissionPolling({
             };
 
             onResult?.(taskId, submissionResult);
-
             finishSubmission(result.status, result.feedBack || '');
 
             if (result.status === 'SUCCESS') {
-                toast.success('Решение принято! 🎉');
                 onSolved?.(taskId, result.status);
-            } else if (result.status === 'FAILED') {
-                toast.error('Решение не прошло проверку');
-            } else {
-                toast.warning(`Статус: ${result.status}`);
             }
-
         } catch {
             finishSubmission(
                 'SERVICE_UNAVAILABLE',

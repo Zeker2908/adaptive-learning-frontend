@@ -69,12 +69,7 @@ export function useChoiceSubmission({
             setFeedback(result.feedBack || '');
 
             if (result.status === 'SUCCESS') {
-                toast.success('Верно! 🎉');
                 onSolved?.(taskId, result.status);
-            } else if (result.status === 'FAILED') {
-                toast.error('Неверный ответ');
-            } else {
-                toast.warning(`Статус: ${result.status}`);
             }
 
         } catch {

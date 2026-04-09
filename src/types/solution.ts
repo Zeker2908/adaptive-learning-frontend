@@ -49,7 +49,7 @@ export type SolutionStatus =
 export const SolutionStatusLabels: Record<SolutionStatus, string> = {
     PENDING: "В обработке",
     SUCCESS: "Успешно",
-    FAILED: "Ошибка",
+    FAILED: "Неверный ответ",
     SERVICE_UNAVAILABLE: "Сервис недоступен",
     TIMEOUT: "Превышено время ожидания",
 };

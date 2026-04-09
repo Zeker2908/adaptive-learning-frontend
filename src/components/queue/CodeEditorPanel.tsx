@@ -8,7 +8,7 @@ import {getLangById} from '@/types/languages';
 import type {TaskResponse} from '@/types/task';
 import type {SubmissionResult} from '@/types/queue';
 import {useSubmissionPolling} from "@/hooks/useSubmissionPolling";
-import {type Language, type SolutionStatus, SolutionStatusLabels} from "@/types/solution";
+import {type SolutionStatus} from "@/types/solution";
 
 interface Props {
     task: TaskResponse;
@@ -42,7 +42,7 @@ export function CodeEditorPanel({
         isSubmitting,
         submitSolution,
         resetSubmission
-    } = useSubmissionPolling({ onSolved, onResult });
+    } = useSubmissionPolling({onSolved, onResult});
 
     const hasHandledExceededRef = useRef(false);
 
@@ -114,7 +114,7 @@ export function CodeEditorPanel({
             </div>
 
             {/* EDITOR */}
-            <div className="flex-1 border rounded-md overflow-hidden mb-4 relative min-h-[400px]">
+            <div className="flex-1 border rounded-md overflow-hidden mb-4 relative min-h-100">
 
                 {isTaskSolved && (
                     <div
@@ -148,59 +148,16 @@ export function CodeEditorPanel({
                 />
             </div>
 
-            {isAttemptsExceeded ? (
-                <p className="text-xs text-red-500">
-                    Достигнут лимит попыток
-                </p>
-            ) : (
-                <div className="flex gap-1 mb-2">
-                    {Array.from({ length: MAX_FAILED_ATTEMPTS }).map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-2 h-2 rounded-full ${
-                                i < failedAttempts ? 'bg-red-500' : 'bg-gray-300'
-                            }`}
-                        />
-                    ))}
-                </div>
-            )}
-
-            {/* HISTORY */}
-            {taskResults.length > 0 && (
-                <div className="mb-4 p-3 bg-muted/30 rounded-md border">
-                    <div className="text-xs font-medium text-muted-foreground mb-2">
-                        Последние попытки ({taskResults.length})
-                    </div>
-
-                    <div className="space-y-2">
-                        {taskResults.map((result) => (
-                            <div
-                                key={result.id}
-                                className="flex items-center justify-between text-xs p-2 bg-background rounded border"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className={`w-2 h-2 rounded-full ${
-                                        result.status === 'SUCCESS' ? 'bg-green-500' :
-                                            result.status === 'FAILED' ? 'bg-red-500' :
-                                                'bg-yellow-500'
-                                    }`}/>
-
-                                    <span>{SolutionStatusLabels[result.status]}</span>
-                                    <span className="text-muted-foreground">•</span>
-                                    <span className="text-muted-foreground">
-                                        {getLangById(result.language as Language)?.label || result.language}
-                                    </span>
-                                </div>
-
-                                <span className="text-muted-foreground">
-                                    {new Date(result.submittedAt)
-                                        .toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <div className="flex gap-1 mb-2">
+                {Array.from({length: MAX_FAILED_ATTEMPTS}).map((_, i) => (
+                    <div
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${
+                            i < failedAttempts ? 'bg-red-500' : 'bg-gray-300'
+                        }`}
+                    />
+                ))}
+            </div>
 
             {/* ACTIONS */}
             <div className="space-y-3">

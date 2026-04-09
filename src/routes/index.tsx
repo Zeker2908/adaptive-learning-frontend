@@ -19,6 +19,8 @@ import UserViewPage from "@/pages/UserViewPage.tsx";
 import AdminCreateTaskPage from "@/pages/AdminCreateTaskPage.tsx";
 import AdminTasksPage from "@/pages/AdminTasksPage.tsx";
 import InfiniteQueuePage from "@/pages/InfiniteQueuePage.tsx";
+import HelpPage from "@/pages/HelpPage.tsx";
+import CommunityPage from "@/pages/CommunityPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -57,6 +59,14 @@ export const router = createBrowserRouter([
             {
                 path: '/task-stream',
                 element: <InfiniteQueuePage/>
+            },
+            {
+                path: '/community',
+                element: <CommunityPage/>
+            },
+            {
+                path: '/help',
+                element: <HelpPage/>
             },
 
             {

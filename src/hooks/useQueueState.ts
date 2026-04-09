@@ -1,4 +1,4 @@
-// components/queue/hooks/useQueueState.ts
+// /hooks/useQueueState.ts
 import {useCallback, useEffect, useState} from 'react';
 import {recommendationService} from '@/services/recommendationService';
 import type {QueueState, SubmissionResult, UseQueueReturn} from '@/types/queue';
@@ -156,11 +156,24 @@ export function useQueueState(): UseQueueReturn {
     const goToNext = useCallback(() => {
         setState(prev => {
             const nextIndex = Math.min(prev.currentIndex + 1, prev.tasks.length - 1);
-            const newState = {...prev, currentIndex: nextIndex};
-            saveToStorage(newState);
-            return newState;
+
+            const tempState = { ...prev, currentIndex: nextIndex };
+
+            if (isQueueCompleted(tempState)) {
+                console.log('[Queue] Completed → reset before next load');
+
+                const newState = getInitialState();
+                saveToStorage(newState);
+
+                Promise.resolve().then(() => loadTasks());
+
+                return newState;
+            }
+
+            saveToStorage(tempState);
+            return tempState;
         });
-    }, [saveToStorage]);
+    }, [saveToStorage, loadTasks]);
 
     const goToPrevious = useCallback(() => {
         setState(prev => {
@@ -190,15 +203,6 @@ export function useQueueState(): UseQueueReturn {
     }, [saveToStorage]);
 
     useEffect(() => {
-        const atEnd = state.currentIndex >= state.tasks.length - 1;
-        const hasTasks = state.tasks.length > 0;
-
-        if (hasTasks && atEnd && !isLoading) {
-            loadTasks(true);
-        }
-    }, [state.currentIndex, state.tasks.length, isLoading, loadTasks]);
-
-    useEffect(() => {
         if (state.tasks.length === 0) {
             loadTasks();
         }
@@ -223,22 +227,6 @@ export function useQueueState(): UseQueueReturn {
 
         setCode(getCodeForTask(currentTask.id, selectedLanguage));
     }, [currentTask, selectedLanguage, getCodeForTask]);
-
-    useEffect(() => {
-        if (isLoading) return;
-
-        const completed = isQueueCompleted(state);
-
-        if (completed && state.tasks.length > 0) {
-            console.log('[Queue] All tasks completed → resetting queue');
-
-            const newState = getInitialState();
-            setState(newState);
-            saveToStorage(newState);
-
-            loadTasks();
-        }
-    }, [state, isLoading, loadTasks, saveToStorage]);
 
     const handleCodeChange = useCallback((newCode: string) => {
         setCode(newCode);

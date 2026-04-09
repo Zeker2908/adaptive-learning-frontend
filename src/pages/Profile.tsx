@@ -11,6 +11,10 @@ import type {BindPasswordRequest, ChangePasswordRequest} from "@/types/auth.ts";
 import type {UserUpdateRequest} from "@/types/user.ts";
 import {useAuthStore} from "@/store/authStore.ts";
 
+// 🔹 Импорт анимаций
+import {motion} from 'framer-motion';
+import {Loader2} from 'lucide-react';
+
 export function ProfilePage() {
     const {user, setUser} = useUserStore();
     const {clearToken} = useAuthStore();
@@ -57,37 +61,84 @@ export function ProfilePage() {
         }
     };
 
+    // 🔹 Анимированный лоадер
     if (!user) {
         return (
             <RootLayout>
-                <div className="flex items-center justify-center min-h-screen">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-                </div>
+                <motion.div
+                    initial={{opacity: 0}}
+                    animate={{opacity: 1}}
+                    className="flex items-center justify-center min-h-screen"
+                >
+                    <div className="text-center space-y-4">
+                        <motion.div
+                            animate={{rotate: 360}}
+                            transition={{duration: 1, repeat: Infinity, ease: "linear"}}
+                            className="inline-block"
+                        >
+                            <Loader2 className="h-8 w-8 text-primary"/>
+                        </motion.div>
+                        <motion.p
+                            initial={{opacity: 0, y: 8}}
+                            animate={{opacity: 1, y: 0}}
+                            transition={{delay: 0.1}}
+                            className="text-muted-foreground"
+                        >
+                            Загружаем профиль...
+                        </motion.p>
+                    </div>
+                </motion.div>
             </RootLayout>
         );
     }
 
     return (
         <RootLayout>
-            <div className="max-w-2xl mx-auto space-y-8">
-                <div>
+            {/* 🔹 Основной контейнер с fade-in */}
+            <motion.div
+                initial={{opacity: 0}}
+                animate={{opacity: 1}}
+                transition={{duration: 0.25}}
+                className="max-w-2xl mx-auto space-y-8"
+            >
+                {/* 🔹 Заголовок с лёгким slide-up */}
+                <motion.div
+                    initial={{opacity: 0, y: 12}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.3, delay: 0.05}}
+                >
                     <h1 className="text-2xl font-bold">Редактирование профиля</h1>
-                    <p className="text-muted-foreground">Обновите информацию о вашем аккаунте</p>
-                </div>
+                    <p className="text-muted-foreground">
+                        Обновите информацию о вашем аккаунте
+                    </p>
+                </motion.div>
 
-                <PersonalInfoForm
-                    user={user}
-                    onSubmit={handleUpdateProfile}
-                    isSubmitting={isSubmitting}
-                />
+                {/* 🔹 Формы с каскадной анимацией */}
+                <motion.div
+                    initial={{opacity: 0, y: 12}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.3, delay: 0.15}}
+                >
+                    <PersonalInfoForm
+                        user={user}
+                        onSubmit={handleUpdateProfile}
+                        isSubmitting={isSubmitting}
+                    />
+                </motion.div>
 
-                <PasswordManagementForm
-                    user={user}
-                    onChangePassword={handleChangePassword}
-                    onBindPassword={handleBindPassword}
-                    isSubmitting={isSubmitting}
-                />
-            </div>
+                <motion.div
+                    initial={{opacity: 0, y: 12}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.3, delay: 0.25}}
+                >
+                    <PasswordManagementForm
+                        user={user}
+                        onChangePassword={handleChangePassword}
+                        onBindPassword={handleBindPassword}
+                        isSubmitting={isSubmitting}
+                    />
+                </motion.div>
+            </motion.div>
         </RootLayout>
     );
 }

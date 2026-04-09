@@ -122,7 +122,7 @@ export default function InfiniteQueuePage() {
                                 <div>
                                     <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                                         <InfinityIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary"/>
-                                        Бесконечная очередь
+                                        Персональная очередь задач
                                     </h1>
                                     <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
                                         Решайте задачи по мере сил — система подберёт следующие
@@ -174,7 +174,7 @@ export default function InfiniteQueuePage() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-center">
+                            <div className="flex justify-center min-h-8">
                                 <CountdownToast countdown={countdown ?? 0} />
                             </div>
 

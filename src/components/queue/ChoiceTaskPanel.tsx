@@ -6,7 +6,7 @@ import {OptionItem} from './OptionItem';
 import {SubmissionStatus} from './SubmissionStatus';
 import type {MultipleChoiceTaskContent, SingleChoiceTaskContent, TaskResponse} from '@/types/task';
 import type {SubmissionResult} from '@/types/queue';
-import {type SolutionStatus, SolutionStatusLabels} from '@/types/solution';
+import {type SolutionStatus} from '@/types/solution';
 import {useChoiceSubmission} from "@/hooks/useChoiceSubmission.ts";
 
 interface Props {
@@ -155,48 +155,9 @@ export function ChoiceTaskPanel({
                 ))}
             </div>
 
-            {/* HISTORY */}
-            {taskResults.length > 0 && (
-                <div className="mb-4 p-3 bg-muted/30 rounded-md border shrink-0">
-                    <div className="text-xs font-medium text-muted-foreground mb-2">
-                        Последние попытки ({taskResults.length})
-                    </div>
-                    <div className="space-y-2">
-                        {taskResults.map((result) => (
-                            <div
-                                key={result.id}
-                                className="flex items-center justify-between text-xs p-2 bg-background rounded border"
-                            >
-                                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${
-                      result.status === 'SUCCESS' ? 'bg-green-500' :
-                          result.status === 'FAILED' ? 'bg-red-500' :
-                              'bg-yellow-500'
-                  }`}/>
-                                    <span>{SolutionStatusLabels[result.status]}</span>
-                                    <span className="text-muted-foreground">•</span>
-                                    <span className="text-muted-foreground">
-                    {isMultiple ? 'Несколько' : 'Один'} вариант
-                  </span>
-                                </div>
-                                <span className="text-muted-foreground">
-                  {new Date(result.submittedAt)
-                      .toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
 
             {/* ACTIONS */}
             <div className="space-y-3 mt-auto">
-                {isAttemptsExceeded && (
-                    <p className="text-xs text-red-500">
-                        Достигнут лимит попыток
-                    </p>
-                )}
                 <Button
                     onClick={handleSubmit}
                     disabled={!canSubmit}
