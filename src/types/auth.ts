@@ -54,6 +54,10 @@ export interface ConfirmationEmailRequest {
     token: string;
 }
 
+export interface LoginTokenRequest {
+    token: string;
+}
+
 export interface AuthenticationResponse {
     token: string;
 }

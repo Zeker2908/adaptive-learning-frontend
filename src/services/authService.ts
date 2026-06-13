@@ -4,6 +4,7 @@ import type {
     AuthenticationResponse,
     ConfirmationEmailRequest,
     LoginRequest,
+    LoginTokenRequest,
     RegisterRequest,
     ResendRequest,
     ResetPasswordRequest
@@ -12,6 +13,10 @@ import type {
 export const authService = {
     async login(data: LoginRequest): Promise<AuthenticationResponse> {
         return api.post<AuthenticationResponse>('/auth/login', data);
+    },
+
+    async loginWithToken(data: LoginTokenRequest): Promise<AuthenticationResponse> {
+        return api.post<AuthenticationResponse>('/auth/login-token', data);
     },
 
     async register(data: RegisterRequest): Promise<void> {
