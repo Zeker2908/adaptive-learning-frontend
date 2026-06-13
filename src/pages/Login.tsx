@@ -1,14 +1,12 @@
 // pages/Login.tsx
 import {LoginForm} from '@/components/auth/LoginForm';
 import {AuthLayout} from '@/components/auth/AuthLayout';
-import {Link, useLocation, useNavigate, useSearchParams} from 'react-router-dom';
+import {Link, useLocation} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {FcGoogle} from 'react-icons/fc';
 import {oauthService} from '@/services/oauthService';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect} from 'react';
 import {toast} from 'sonner';
-import {useAuthStore} from '@/store/authStore';
-import {useError} from '@/hooks/useError';
 
 // 🔹 Импорт анимаций
 import {motion} from 'framer-motion';
@@ -43,12 +41,6 @@ const buttonTap = {
 
 export default function LoginPage() {
     const location = useLocation();
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const {login} = useAuthStore();
-    const {handleError} = useError();
-    const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
-    const autoLoginAttemptedRef = useRef(false);
 
     useEffect(() => {
         if (location.state?.message) {
@@ -59,51 +51,9 @@ export default function LoginPage() {
         }
     }, [location.state?.message]);
 
-    useEffect(() => {
-        const email = searchParams.get('email');
-        const password = searchParams.get('password');
-
-        if (!email || !password || autoLoginAttemptedRef.current) {
-            return;
-        }
-
-        autoLoginAttemptedRef.current = true;
-        navigate('/login', {replace: true});
-
-        const autoLogin = async () => {
-            try {
-                setIsAutoLoggingIn(true);
-                await login({email, password});
-                toast.success('Вход выполнен успешно!', {
-                    duration: 3000,
-                    position: 'top-right',
-                });
-            } catch (err) {
-                handleError(err);
-            } finally {
-                setIsAutoLoggingIn(false);
-            }
-        };
-
-        void autoLogin();
-    }, [searchParams, navigate, login, handleError]);
-
     const handleGoogleLogin = () => {
         oauthService.googleLogin();
     };
-
-    if (isAutoLoggingIn) {
-        return (
-            <AuthLayout
-                title="Добро пожаловать"
-                description="Выполняется вход..."
-            >
-                <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-                </div>
-            </AuthLayout>
-        );
-    }
 
     return (
         <AuthLayout
