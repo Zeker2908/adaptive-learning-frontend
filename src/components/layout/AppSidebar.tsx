@@ -56,8 +56,8 @@ export function AppSidebar() {
                             className="text-lg font-bold"
                             onClick={() => navigate('/dashboard')}
                         >
-                            <img src={logo} alt="Adaptive Learning" className="h-6 w-6"/>
-                            <span className="font-semibold">Adaptive Learning</span>
+                            <img src={logo} alt="AdaptCode" className="h-6 w-6"/>
+                            <span className="font-semibold">AdaptCode</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

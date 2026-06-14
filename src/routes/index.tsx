@@ -17,6 +17,7 @@ import {AdminRoute} from "@/routes/AdminRoute.tsx";
 import AdminUsersPage from "@/pages/AdminUsersPage.tsx";
 import UserViewPage from "@/pages/UserViewPage.tsx";
 import AdminCreateTaskPage from "@/pages/AdminCreateTaskPage.tsx";
+import AdminEditTaskPage from "@/pages/AdminEditTaskPage.tsx";
 import AdminTasksPage from "@/pages/AdminTasksPage.tsx";
 import InfiniteQueuePage from "@/pages/InfiniteQueuePage.tsx";
 import HelpPage from "@/pages/HelpPage.tsx";
@@ -76,6 +77,7 @@ export const router = createBrowserRouter([
                     {path: '/admin/users/:userId', element: <UserViewPage/>},
                     {path: '/admin/tasks', element: <AdminTasksPage/>},
                     {path: '/admin/tasks/create', element: <AdminCreateTaskPage/>},
+                    {path: '/admin/tasks/:taskId', element: <AdminEditTaskPage/>},
                 ]
             }
         ]

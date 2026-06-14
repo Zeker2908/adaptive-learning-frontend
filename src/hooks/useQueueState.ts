@@ -1,5 +1,5 @@
 // /hooks/useQueueState.ts
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {recommendationService} from '@/services/recommendationService';
 import type {QueueState, SubmissionResult, UseQueueReturn} from '@/types/queue';
 import {getLangById, LANGUAGES} from '@/types/languages';
@@ -9,6 +9,9 @@ const STORAGE_KEY = 'infinite_queue_state';
 const STORAGE_TTL = 1000 * 60 * 60; // 1 час
 const MAX_RESULTS_PER_TASK = 3;
 const MAX_ATTEMPTS = 3;
+const INITIAL_BATCH_SIZE = 5;
+const LOAD_MORE_BATCH_SIZE = 10;
+const PREFETCH_REMAINING = 2;
 
 export function clearQueueStorage() {
     if (typeof window === 'undefined') return;
@@ -70,6 +73,8 @@ export function useQueueState(): UseQueueReturn {
     const [state, setState] = useState<QueueState>(() => loadFromStorage());
     const [isLoading, setIsLoading] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0].id);
+    const isLoadingRef = useRef(false);
+    const initialLoadDoneRef = useRef(false);
 
     function loadFromStorage(): QueueState {
         try {
@@ -105,9 +110,7 @@ export function useQueueState(): UseQueueReturn {
         }
     }, []);
 
-
     const reconcileState = useCallback((prev: QueueState, newTasks: QueueState['tasks'], append: boolean): QueueState => {
-        // 1. Merge задач без дублей
         const taskMap = new Map<string, typeof newTasks[number]>();
 
         if (append) {
@@ -117,8 +120,6 @@ export function useQueueState(): UseQueueReturn {
         newTasks.forEach(t => taskMap.set(t.id, t));
 
         const mergedTasks = Array.from(taskMap.values());
-
-        // 2. Фильтрация solvedTasks
         const taskIds = new Set(mergedTasks.map(t => t.id));
 
         const filteredSolved = new Set(
@@ -134,46 +135,76 @@ export function useQueueState(): UseQueueReturn {
         };
     }, []);
 
-    const loadTasks = useCallback(async (append = false) => {
+    const loadTasks = useCallback(async (append = false): Promise<number> => {
+        if (isLoadingRef.current) {
+            return 0;
+        }
+
+        isLoadingRef.current = true;
         setIsLoading(true);
 
         try {
-            const newTasks = await recommendationService.getRecommendations();
+            const newTasks = await recommendationService.getRecommendations({
+                limit: append ? LOAD_MORE_BATCH_SIZE : INITIAL_BATCH_SIZE,
+            });
+
+            let addedCount = 0;
 
             setState(prev => {
+                const knownIds = new Set(prev.tasks.map(task => task.id));
                 const newState = reconcileState(prev, newTasks, append);
-
+                addedCount = newState.tasks.filter(task => !knownIds.has(task.id)).length;
                 saveToStorage(newState);
                 return newState;
             });
+
+            return addedCount;
         } catch (error) {
             console.error('[Queue] Failed to load:', error);
+            return 0;
         } finally {
+            isLoadingRef.current = false;
             setIsLoading(false);
         }
     }, [reconcileState, saveToStorage]);
 
+    const handleEndOfQueue = useCallback(async (snapshot: QueueState) => {
+        if (isQueueCompleted(snapshot)) {
+            const resetState: QueueState = {
+                ...getInitialState(),
+                stats: snapshot.stats,
+            };
+            setState(resetState);
+            saveToStorage(resetState);
+            await loadTasks(false);
+            return;
+        }
+
+        const added = await loadTasks(true);
+        if (added > 0) {
+            setState(prev => {
+                if (prev.currentIndex >= prev.tasks.length - 1) {
+                    const newState = {...prev, currentIndex: prev.currentIndex + 1};
+                    saveToStorage(newState);
+                    return newState;
+                }
+                return prev;
+            });
+        }
+    }, [loadTasks, saveToStorage]);
+
     const goToNext = useCallback(() => {
         setState(prev => {
-            const nextIndex = Math.min(prev.currentIndex + 1, prev.tasks.length - 1);
-
-            const tempState = { ...prev, currentIndex: nextIndex };
-
-            if (isQueueCompleted(tempState)) {
-                console.log('[Queue] Completed → reset before next load');
-
-                const newState = getInitialState();
+            if (prev.currentIndex < prev.tasks.length - 1) {
+                const newState = {...prev, currentIndex: prev.currentIndex + 1};
                 saveToStorage(newState);
-
-                Promise.resolve().then(() => loadTasks());
-
                 return newState;
             }
 
-            saveToStorage(tempState);
-            return tempState;
+            void handleEndOfQueue(prev);
+            return prev;
         });
-    }, [saveToStorage, loadTasks]);
+    }, [handleEndOfQueue, saveToStorage]);
 
     const goToPrevious = useCallback(() => {
         setState(prev => {
@@ -203,10 +234,33 @@ export function useQueueState(): UseQueueReturn {
     }, [saveToStorage]);
 
     useEffect(() => {
-        if (state.tasks.length === 0) {
-            loadTasks();
+        if (initialLoadDoneRef.current) {
+            return;
         }
-    }, [loadTasks, state.tasks.length]);
+        initialLoadDoneRef.current = true;
+
+        if (state.tasks.length === 0) {
+            void loadTasks(false);
+            return;
+        }
+
+        if (isQueueCompleted(state)) {
+            void loadTasks(true);
+        }
+    }, [loadTasks, state]);
+
+    useEffect(() => {
+        if (state.tasks.length === 0 || isLoadingRef.current) {
+            return;
+        }
+
+        const remaining = state.tasks.length - 1 - state.currentIndex;
+        if (remaining > PREFETCH_REMAINING) {
+            return;
+        }
+
+        void loadTasks(true);
+    }, [state.currentIndex, state.tasks.length, loadTasks]);
 
     const currentTask = state.tasks[state.currentIndex] || null;
 
@@ -308,7 +362,7 @@ export function useQueueState(): UseQueueReturn {
 
         isLoading,
         loadMore: () => loadTasks(true),
-        refresh: () => loadTasks(),
+        refresh: () => loadTasks(false),
 
         isQueueEmpty: state.tasks.length === 0,
         isLastTask: state.currentIndex === state.tasks.length - 1,

@@ -246,6 +246,7 @@ export function TasksTable({
 
                         <TableHead>Сложность</TableHead>
                         <TableHead>Теги</TableHead>
+                        <TableHead className="w-[60px]"/>
 
                     </TableRow>
                 </TableHeader>
@@ -257,7 +258,7 @@ export function TasksTable({
                             <TableRow
                                 key={task.id}
                                 className="hover:bg-muted/50 cursor-pointer transition-colors"
-                                // onClick={() => navigate(`/admin/tasks/${task.id}`)}
+                                onClick={() => navigate(`/admin/tasks/${task.id}`)}
                             >
                                 {/* Title */}
                                 <TableCell className="font-medium">
@@ -367,7 +368,7 @@ export function TasksTable({
 
                     {tasks.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                 {hasActiveFilters ? 'По фильтрам ничего не найдено' : 'Задачи отсутствуют'}
                             </TableCell>
                         </TableRow>

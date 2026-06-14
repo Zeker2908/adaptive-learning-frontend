@@ -11,9 +11,10 @@ interface Props {
     onSubmit: (data: TaskRequest) => void;
     isLoading: boolean;
     initialData?: Partial<TaskRequest>;
+    mode?: 'create' | 'edit';
 }
 
-export function TaskForm({onSubmit, isLoading, initialData}: Props) {
+export function TaskForm({onSubmit, isLoading, initialData, mode = 'create'}: Props) {
     const [title, setTitle] = useState(initialData?.title || '');
     const [description, setDescription] = useState(initialData?.description || '');
     const [difficulty, setDifficulty] = useState<Difficulty>(initialData?.difficulty || 'EASY');
@@ -120,7 +121,9 @@ export function TaskForm({onSubmit, isLoading, initialData}: Props) {
 
             <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isLoading || !content || !title.trim()}>
-                    {isLoading ? 'Создание...' : 'Создать задачу'}
+                    {mode === 'edit'
+                        ? (isLoading ? 'Сохранение...' : 'Сохранить изменения')
+                        : (isLoading ? 'Создание...' : 'Создать задачу')}
                 </Button>
             </div>
         </form>
