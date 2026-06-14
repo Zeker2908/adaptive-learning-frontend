@@ -69,6 +69,7 @@ export interface UseQueueReturn {
     // 🔹 Результаты и блокировка
     taskResults: SubmissionResult[];
     isTaskSolved: boolean;
+    isCurrentTaskCompleted: boolean;
     canSubmit: boolean;
     markTaskAsSolved: (taskId: string) => void;
     addSubmissionResult: (taskId: string, result: SubmissionResult) => void;

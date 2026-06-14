@@ -45,6 +45,7 @@ export function CodeEditorPanel({
     } = useSubmissionPolling({onSolved, onResult});
 
     const hasHandledExceededRef = useRef(false);
+    const prevFailedAttemptsRef = useRef<number | null>(null);
 
     const failedAttempts = useMemo(() => {
         return taskResults.filter(r => r.status === 'FAILED').length;
@@ -53,6 +54,7 @@ export function CodeEditorPanel({
 
     useEffect(() => {
         hasHandledExceededRef.current = false;
+        prevFailedAttemptsRef.current = null;
     }, [task.id]);
 
     useEffect(() => {
@@ -60,12 +62,21 @@ export function CodeEditorPanel({
     }, [task.id, resetSubmission]);
 
     useEffect(() => {
-        // 🔹 Проверяем: лимит превышен И ещё не обработали для этой задачи
-        if (failedAttempts >= MAX_FAILED_ATTEMPTS && !hasHandledExceededRef.current) {
-            hasHandledExceededRef.current = true; // 🔹 Блокируем повторные вызовы
+        if (prevFailedAttemptsRef.current === null) {
+            prevFailedAttemptsRef.current = failedAttempts;
+            return;
+        }
 
+        if (
+            failedAttempts >= MAX_FAILED_ATTEMPTS
+            && prevFailedAttemptsRef.current < MAX_FAILED_ATTEMPTS
+            && !hasHandledExceededRef.current
+        ) {
+            hasHandledExceededRef.current = true;
             onSolved(task.id, 'FAILED');
         }
+
+        prevFailedAttemptsRef.current = failedAttempts;
     }, [failedAttempts, onSolved, task.id]);
 
     const isAttemptsExceeded = failedAttempts >= MAX_FAILED_ATTEMPTS;

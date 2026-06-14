@@ -27,6 +27,7 @@ export default function InfiniteQueuePage() {
         isQueueEmpty,
         taskResults,
         isTaskSolved,
+        isCurrentTaskCompleted,
         markTaskAsSolved,
         addSubmissionResult,
     } = useQueueState();
@@ -65,15 +66,16 @@ export default function InfiniteQueuePage() {
     }, [markTaskAsSolved, startAutoNext, updateStats]);
 
     useEffect(() => {
-        if (currentTask) {
-            const isAlreadyCompleted = isTaskSolved ||
-                taskResults.some(r => r.status === 'FAILED');
-
-            if (!isAlreadyCompleted) {
-                handledTasksRef.current.delete(currentTask.id);
-            }
+        if (currentTask && isCurrentTaskCompleted) {
+            handledTasksRef.current.add(currentTask.id);
         }
-    }, [currentTask, isTaskSolved, taskResults]);
+    }, [currentTask, isCurrentTaskCompleted]);
+
+    useEffect(() => {
+        if (currentTask && !isCurrentTaskCompleted) {
+            handledTasksRef.current.delete(currentTask.id);
+        }
+    }, [currentTask, isCurrentTaskCompleted]);
 
     if (isLoading && isQueueEmpty) {
         return (

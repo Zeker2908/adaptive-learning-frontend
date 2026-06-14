@@ -4,6 +4,7 @@ import {recommendationService} from '@/services/recommendationService';
 import type {QueueState, SubmissionResult, UseQueueReturn} from '@/types/queue';
 import {getLangById, LANGUAGES} from '@/types/languages';
 import type {SolutionStatus} from "@/types/solution.ts";
+import type {TaskResponse} from '@/types/task';
 
 const STORAGE_KEY = 'infinite_queue_state';
 const STORAGE_TTL = 1000 * 60 * 60; // 1 час
@@ -56,11 +57,27 @@ function deserializeState(raw: string): QueueState {
     };
 }
 
-function isTaskCompleted(taskId: string, state: QueueState): boolean {
-    const isSolved = state.solvedTasks.has(taskId);
-    const attempts = state.taskResults[taskId]?.length || 0;
+function getTaskById(tasks: TaskResponse[], taskId: string): TaskResponse | undefined {
+    return tasks.find(task => task.id === taskId);
+}
 
-    return isSolved || attempts >= MAX_ATTEMPTS;
+function isChoiceTask(task: TaskResponse | undefined): boolean {
+    const type = task?.content.type;
+    return type === 'SINGLE_CHOICE' || type === 'MULTIPLE_CHOICE';
+}
+
+export function isTaskCompleted(taskId: string, state: QueueState): boolean {
+    if (state.solvedTasks.has(taskId)) return true;
+
+    const results = state.taskResults[taskId] || [];
+    const failedCount = results.filter(r => r.status === 'FAILED').length;
+    const task = getTaskById(state.tasks, taskId);
+
+    if (isChoiceTask(task)) {
+        return failedCount >= 1;
+    }
+
+    return failedCount >= MAX_ATTEMPTS || results.length >= MAX_ATTEMPTS;
 }
 
 function isQueueCompleted(state: QueueState): boolean {
@@ -73,8 +90,14 @@ export function useQueueState(): UseQueueReturn {
     const [state, setState] = useState<QueueState>(() => loadFromStorage());
     const [isLoading, setIsLoading] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0].id);
+    const stateRef = useRef(state);
     const isLoadingRef = useRef(false);
+    const loadGenerationRef = useRef(0);
+    const pendingAppendRef = useRef(false);
     const initialLoadDoneRef = useRef(false);
+    const skipNextPersistRef = useRef(true);
+
+    stateRef.current = state;
 
     function loadFromStorage(): QueueState {
         try {
@@ -110,6 +133,14 @@ export function useQueueState(): UseQueueReturn {
         }
     }, []);
 
+    useEffect(() => {
+        if (skipNextPersistRef.current) {
+            skipNextPersistRef.current = false;
+            return;
+        }
+        saveToStorage(state);
+    }, [state, saveToStorage]);
+
     const reconcileState = useCallback((prev: QueueState, newTasks: QueueState['tasks'], append: boolean): QueueState => {
         const taskMap = new Map<string, typeof newTasks[number]>();
 
@@ -126,27 +157,45 @@ export function useQueueState(): UseQueueReturn {
             Array.from(prev.solvedTasks).filter(id => taskIds.has(id))
         );
 
+        const filteredResults = Object.fromEntries(
+            Object.entries(prev.taskResults).filter(([id]) => taskIds.has(id))
+        );
+
+        const filteredCodeCache = Object.fromEntries(
+            Object.entries(prev.codeCache).filter(([id]) => taskIds.has(id))
+        );
+
         return {
             ...prev,
             tasks: mergedTasks,
             currentIndex: append ? prev.currentIndex : 0,
             solvedTasks: filteredSolved,
+            taskResults: filteredResults,
+            codeCache: filteredCodeCache,
             lastUpdated: Date.now(),
         };
     }, []);
 
     const loadTasks = useCallback(async (append = false): Promise<number> => {
         if (isLoadingRef.current) {
+            if (append) {
+                pendingAppendRef.current = true;
+            }
             return 0;
         }
 
         isLoadingRef.current = true;
         setIsLoading(true);
+        const generation = ++loadGenerationRef.current;
 
         try {
             const newTasks = await recommendationService.getRecommendations({
                 limit: append ? LOAD_MORE_BATCH_SIZE : INITIAL_BATCH_SIZE,
             });
+
+            if (generation !== loadGenerationRef.current) {
+                return 0;
+            }
 
             let addedCount = 0;
 
@@ -154,7 +203,6 @@ export function useQueueState(): UseQueueReturn {
                 const knownIds = new Set(prev.tasks.map(task => task.id));
                 const newState = reconcileState(prev, newTasks, append);
                 addedCount = newState.tasks.filter(task => !knownIds.has(task.id)).length;
-                saveToStorage(newState);
                 return newState;
             });
 
@@ -165,61 +213,61 @@ export function useQueueState(): UseQueueReturn {
         } finally {
             isLoadingRef.current = false;
             setIsLoading(false);
-        }
-    }, [reconcileState, saveToStorage]);
 
-    const handleEndOfQueue = useCallback(async (snapshot: QueueState) => {
+            if (pendingAppendRef.current) {
+                pendingAppendRef.current = false;
+                void loadTasks(true);
+            }
+        }
+    }, [reconcileState]);
+
+    const handleEndOfQueue = useCallback(async () => {
+        const snapshot = stateRef.current;
+
         if (isQueueCompleted(snapshot)) {
-            const resetState: QueueState = {
+            setState({
                 ...getInitialState(),
                 stats: snapshot.stats,
-            };
-            setState(resetState);
-            saveToStorage(resetState);
+            });
             await loadTasks(false);
             return;
         }
 
         const added = await loadTasks(true);
         if (added > 0) {
-            setState(prev => {
-                if (prev.currentIndex >= prev.tasks.length - 1) {
-                    const newState = {...prev, currentIndex: prev.currentIndex + 1};
-                    saveToStorage(newState);
-                    return newState;
-                }
-                return prev;
-            });
+            setState(prev => ({
+                ...prev,
+                currentIndex: prev.currentIndex + 1,
+            }));
         }
-    }, [loadTasks, saveToStorage]);
+    }, [loadTasks]);
 
     const goToNext = useCallback(() => {
-        setState(prev => {
-            if (prev.currentIndex < prev.tasks.length - 1) {
-                const newState = {...prev, currentIndex: prev.currentIndex + 1};
-                saveToStorage(newState);
-                return newState;
-            }
+        const snapshot = stateRef.current;
 
-            void handleEndOfQueue(prev);
-            return prev;
-        });
-    }, [handleEndOfQueue, saveToStorage]);
+        if (snapshot.currentIndex < snapshot.tasks.length - 1) {
+            setState(prev => ({
+                ...prev,
+                currentIndex: prev.currentIndex + 1,
+            }));
+            return;
+        }
+
+        void handleEndOfQueue();
+    }, [handleEndOfQueue]);
 
     const goToPrevious = useCallback(() => {
-        setState(prev => {
-            const prevIndex = Math.max(prev.currentIndex - 1, 0);
-            const newState = {...prev, currentIndex: prevIndex};
-            saveToStorage(newState);
-            return newState;
-        });
-    }, [saveToStorage]);
+        setState(prev => ({
+            ...prev,
+            currentIndex: Math.max(prev.currentIndex - 1, 0),
+        }));
+    }, []);
 
     const updateStats = useCallback((status: SolutionStatus) => {
         setState(prev => {
             const isSuccess = status === 'SUCCESS';
 
-            const newState = {
+            return {
                 ...prev,
                 stats: {
                     solved: prev.stats.solved + (isSuccess ? 1 : 0),
@@ -227,11 +275,8 @@ export function useQueueState(): UseQueueReturn {
                     streak: isSuccess ? prev.stats.streak + 1 : 0,
                 },
             };
-
-            saveToStorage(newState);
-            return newState;
         });
-    }, [saveToStorage]);
+    }, []);
 
     useEffect(() => {
         if (initialLoadDoneRef.current) {
@@ -239,15 +284,17 @@ export function useQueueState(): UseQueueReturn {
         }
         initialLoadDoneRef.current = true;
 
-        if (state.tasks.length === 0) {
+        const snapshot = stateRef.current;
+
+        if (snapshot.tasks.length === 0) {
             void loadTasks(false);
             return;
         }
 
-        if (isQueueCompleted(state)) {
+        if (isQueueCompleted(snapshot)) {
             void loadTasks(true);
         }
-    }, [loadTasks, state]);
+    }, [loadTasks]);
 
     useEffect(() => {
         if (state.tasks.length === 0 || isLoadingRef.current) {
@@ -263,6 +310,9 @@ export function useQueueState(): UseQueueReturn {
     }, [state.currentIndex, state.tasks.length, loadTasks]);
 
     const currentTask = state.tasks[state.currentIndex] || null;
+    const isCurrentTaskCompleted = currentTask
+        ? isTaskCompleted(currentTask.id, state)
+        : false;
 
     const getCodeForTask = useCallback((taskId: string, langId: string): string => {
         const task = state.tasks.find(t => t.id === taskId);
@@ -287,59 +337,48 @@ export function useQueueState(): UseQueueReturn {
 
         if (!currentTask) return;
 
-        setState(prev => {
-            const updated = {
-                ...prev,
-                codeCache: {
-                    ...prev.codeCache,
-                    [currentTask.id]: {
-                        ...prev.codeCache[currentTask.id],
-                        [selectedLanguage]: newCode,
-                    },
+        setState(prev => ({
+            ...prev,
+            codeCache: {
+                ...prev.codeCache,
+                [currentTask.id]: {
+                    ...prev.codeCache[currentTask.id],
+                    [selectedLanguage]: newCode,
                 },
-            };
-
-            saveToStorage(updated);
-            return updated;
-        });
-    }, [currentTask, selectedLanguage, saveToStorage]);
+            },
+        }));
+    }, [currentTask, selectedLanguage]);
 
     const addSubmissionResult = useCallback((taskId: string, result: SubmissionResult) => {
         setState(prev => {
             const currentResults = prev.taskResults[taskId] || [];
             const updatedResults = [result, ...currentResults].slice(0, MAX_RESULTS_PER_TASK);
 
-            const newState: QueueState = {
+            return {
                 ...prev,
                 taskResults: {
                     ...prev.taskResults,
                     [taskId]: updatedResults,
                 },
             };
-
-            saveToStorage(newState);
-            return newState;
         });
-    }, [saveToStorage]);
+    }, []);
 
     const markTaskAsSolved = useCallback((taskId: string) => {
         setState(prev => {
             const newSolved = new Set(prev.solvedTasks);
             newSolved.add(taskId);
 
-            const newState: QueueState = {
+            return {
                 ...prev,
                 solvedTasks: newSolved,
             };
-
-            saveToStorage(newState);
-            return newState;
         });
-    }, [saveToStorage]);
+    }, []);
 
     const taskResults = currentTask ? (state.taskResults[currentTask.id] || []) : [];
     const isTaskSolved = currentTask ? state.solvedTasks.has(currentTask.id) : false;
-    const canSubmit = currentTask ? !isTaskSolved : false;
+    const canSubmit = currentTask ? !isCurrentTaskCompleted : false;
 
     return {
         tasks: state.tasks,
@@ -373,6 +412,7 @@ export function useQueueState(): UseQueueReturn {
 
         taskResults,
         isTaskSolved,
+        isCurrentTaskCompleted,
         canSubmit,
         markTaskAsSolved,
         addSubmissionResult,

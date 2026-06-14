@@ -32,6 +32,7 @@ export function ChoiceTaskPanel({
     const isAttemptsExceeded = failedAttempts >= MAX_ATTEMPTS;
 
     const hasHandledExceededRef = useRef(false);
+    const prevFailedAttemptsRef = useRef<number | null>(null);
 
     const {submissionStatus, feedback, isSubmitting, submitAnswer, resetSubmission} =
         useChoiceSubmission({onSolved, onResult});
@@ -43,6 +44,7 @@ export function ChoiceTaskPanel({
     // 🔹 Сбрасываем флаг при смене задачи
     useEffect(() => {
         hasHandledExceededRef.current = false;
+        prevFailedAttemptsRef.current = null;
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedIndices([]);
     }, [task.id]);
@@ -52,12 +54,22 @@ export function ChoiceTaskPanel({
     }, [task.id, resetSubmission])
 
     useEffect(() => {
-        if (isAttemptsExceeded && !hasHandledExceededRef.current) {
-            hasHandledExceededRef.current = true;
+        if (prevFailedAttemptsRef.current === null) {
+            prevFailedAttemptsRef.current = failedAttempts;
+            return;
+        }
 
+        if (
+            isAttemptsExceeded
+            && prevFailedAttemptsRef.current < MAX_ATTEMPTS
+            && !hasHandledExceededRef.current
+        ) {
+            hasHandledExceededRef.current = true;
             onSolved(task.id, 'FAILED');
         }
-    }, [isAttemptsExceeded, onSolved, task.id]);
+
+        prevFailedAttemptsRef.current = failedAttempts;
+    }, [failedAttempts, isAttemptsExceeded, onSolved, task.id]);
 
     // 🔹 Восстанавливаем выбор из истории (только один раз за задачу)
     useEffect(() => {
