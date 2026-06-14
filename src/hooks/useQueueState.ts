@@ -7,12 +7,21 @@ import type {SolutionStatus} from "@/types/solution.ts";
 import type {TaskResponse} from '@/types/task';
 
 const STORAGE_KEY = 'infinite_queue_state';
-const STORAGE_TTL = 1000 * 60 * 60; // 1 час
+const STORAGE_TTL = 1000 * 60 * 60;
 const MAX_RESULTS_PER_TASK = 3;
 const MAX_ATTEMPTS = 3;
 const INITIAL_BATCH_SIZE = 5;
 const LOAD_MORE_BATCH_SIZE = 10;
 const PREFETCH_REMAINING = 2;
+
+interface PersistedQueueProgress {
+    currentTaskId: string | null;
+    lastUpdated: number;
+    codeCache: QueueState['codeCache'];
+    taskResults: QueueState['taskResults'];
+    solvedTasks: string[];
+    stats: QueueState['stats'];
+}
 
 export function clearQueueStorage() {
     if (typeof window === 'undefined') return;
@@ -23,6 +32,21 @@ export function clearQueueStorage() {
     } catch (e) {
         console.warn('[Queue] Failed to clear storage:', e);
     }
+}
+
+function getInitialProgress(): PersistedQueueProgress {
+    return {
+        currentTaskId: null,
+        lastUpdated: Date.now(),
+        codeCache: {},
+        taskResults: {},
+        solvedTasks: [],
+        stats: {
+            solved: 0,
+            failed: 0,
+            streak: 0,
+        },
+    };
 }
 
 function getInitialState(): QueueState {
@@ -41,20 +65,43 @@ function getInitialState(): QueueState {
     };
 }
 
-function serializeState(state: QueueState) {
+function serializeProgress(state: QueueState, currentTaskId: string | null): PersistedQueueProgress {
     return {
-        ...state,
+        currentTaskId,
+        lastUpdated: Date.now(),
+        codeCache: state.codeCache,
+        taskResults: state.taskResults,
         solvedTasks: Array.from(state.solvedTasks),
+        stats: state.stats,
     };
 }
 
-function deserializeState(raw: string): QueueState {
-    const parsed = JSON.parse(raw);
+function loadProgressFromStorage(): PersistedQueueProgress {
+    try {
+        if (typeof window === 'undefined') return getInitialProgress();
 
-    return {
-        ...parsed,
-        solvedTasks: new Set(parsed.solvedTasks || []),
-    };
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getInitialProgress();
+
+        const parsed = JSON.parse(raw) as Partial<PersistedQueueProgress> & Partial<QueueState> & {
+            solvedTasks?: string[];
+        };
+
+        if (Date.now() - (parsed.lastUpdated ?? 0) > STORAGE_TTL) {
+            return getInitialProgress();
+        }
+
+        return {
+            currentTaskId: parsed.currentTaskId ?? null,
+            lastUpdated: parsed.lastUpdated ?? Date.now(),
+            codeCache: parsed.codeCache ?? {},
+            taskResults: parsed.taskResults ?? {},
+            solvedTasks: parsed.solvedTasks ?? [],
+            stats: parsed.stats ?? getInitialProgress().stats,
+        };
+    } catch {
+        return getInitialProgress();
+    }
 }
 
 function getTaskById(tasks: TaskResponse[], taskId: string): TaskResponse | undefined {
@@ -66,7 +113,7 @@ function isChoiceTask(task: TaskResponse | undefined): boolean {
     return type === 'SINGLE_CHOICE' || type === 'MULTIPLE_CHOICE';
 }
 
-export function isTaskCompleted(taskId: string, state: QueueState): boolean {
+export function isTaskCompleted(taskId: string, state: Pick<QueueState, 'solvedTasks' | 'taskResults' | 'tasks'>): boolean {
     if (state.solvedTasks.has(taskId)) return true;
 
     const results = state.taskResults[taskId] || [];
@@ -86,47 +133,88 @@ function isQueueCompleted(state: QueueState): boolean {
     return state.tasks.every(task => isTaskCompleted(task.id, state));
 }
 
+function resolveCurrentIndex(
+    tasks: TaskResponse[],
+    progress: Pick<QueueState, 'solvedTasks' | 'taskResults' | 'tasks'>,
+    preferredTaskId: string | null,
+): number {
+    if (tasks.length === 0) return 0;
+
+    if (preferredTaskId) {
+        const preferredIndex = tasks.findIndex(task => task.id === preferredTaskId);
+        if (preferredIndex >= 0 && !isTaskCompleted(preferredTaskId, {...progress, tasks})) {
+            return preferredIndex;
+        }
+    }
+
+    for (let index = 0; index < tasks.length; index += 1) {
+        const task = tasks[index];
+        if (!isTaskCompleted(task.id, {...progress, tasks})) {
+            return index;
+        }
+    }
+
+    return Math.max(tasks.length - 1, 0);
+}
+
+function clampIndex(index: number, tasksLength: number): number {
+    if (tasksLength === 0) return 0;
+    return Math.min(Math.max(index, 0), tasksLength - 1);
+}
+
+function mergeTasks(
+    prevTasks: TaskResponse[],
+    incomingTasks: TaskResponse[],
+    append: boolean,
+): TaskResponse[] {
+    const taskMap = new Map<string, TaskResponse>();
+
+    if (append) {
+        prevTasks.forEach(task => taskMap.set(task.id, task));
+    }
+
+    incomingTasks.forEach(task => taskMap.set(task.id, task));
+
+    return Array.from(taskMap.values());
+}
+
+function countNewTasks(prevTasks: TaskResponse[], mergedTasks: TaskResponse[]): number {
+    const knownIds = new Set(prevTasks.map(task => task.id));
+    return mergedTasks.filter(task => !knownIds.has(task.id)).length;
+}
+
 export function useQueueState(): UseQueueReturn {
-    const [state, setState] = useState<QueueState>(() => loadFromStorage());
-    const [isLoading, setIsLoading] = useState(false);
+    const initialProgressRef = useRef(loadProgressFromStorage());
+    const [state, setState] = useState<QueueState>(() => ({
+        ...getInitialState(),
+        codeCache: initialProgressRef.current.codeCache,
+        taskResults: initialProgressRef.current.taskResults,
+        solvedTasks: new Set(initialProgressRef.current.solvedTasks),
+        stats: initialProgressRef.current.stats,
+        lastUpdated: initialProgressRef.current.lastUpdated,
+    }));
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0].id);
+    const [currentTaskId, setCurrentTaskId] = useState<string | null>(
+        initialProgressRef.current.currentTaskId
+    );
+
     const stateRef = useRef(state);
-    const isLoadingRef = useRef(false);
-    const loadGenerationRef = useRef(0);
-    const pendingAppendRef = useRef(false);
+    const currentTaskIdRef = useRef(currentTaskId);
+    const loadChainRef = useRef(Promise.resolve(0));
     const initialLoadDoneRef = useRef(false);
     const skipNextPersistRef = useRef(true);
 
     stateRef.current = state;
+    currentTaskIdRef.current = currentTaskId;
 
-    function loadFromStorage(): QueueState {
-        try {
-            if (typeof window === 'undefined') return getInitialState();
-
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return getInitialState();
-
-            const parsed = deserializeState(raw);
-
-            if (Date.now() - parsed.lastUpdated > STORAGE_TTL) {
-                return getInitialState();
-            }
-
-            return parsed;
-        } catch {
-            return getInitialState();
-        }
-    }
-
-    const saveToStorage = useCallback((newState: QueueState) => {
+    const saveProgress = useCallback((nextState: QueueState, nextTaskId: string | null) => {
         if (typeof window === 'undefined') return;
+
         try {
             localStorage.setItem(
                 STORAGE_KEY,
-                JSON.stringify({
-                    ...serializeState(newState),
-                    lastUpdated: Date.now(),
-                })
+                JSON.stringify(serializeProgress(nextState, nextTaskId))
             );
         } catch (e) {
             console.warn('Failed to save queue state:', e);
@@ -138,129 +226,183 @@ export function useQueueState(): UseQueueReturn {
             skipNextPersistRef.current = false;
             return;
         }
-        saveToStorage(state);
-    }, [state, saveToStorage]);
+        saveProgress(state, currentTaskId);
+    }, [state, currentTaskId, saveProgress]);
 
-    const reconcileState = useCallback((prev: QueueState, newTasks: QueueState['tasks'], append: boolean): QueueState => {
-        const taskMap = new Map<string, typeof newTasks[number]>();
+    const applyLoadedTasks = useCallback((
+        incomingTasks: TaskResponse[],
+        append: boolean,
+        preferredTaskId: string | null,
+    ): number => {
+        let addedCount = 0;
+        let nextTaskId: string | null = null;
 
-        if (append) {
-            prev.tasks.forEach(t => taskMap.set(t.id, t));
-        }
+        setState(prev => {
+            const mergedTasks = mergeTasks(prev.tasks, incomingTasks, append);
+            addedCount = countNewTasks(prev.tasks, mergedTasks);
 
-        newTasks.forEach(t => taskMap.set(t.id, t));
+            const nextState: QueueState = {
+                ...prev,
+                tasks: mergedTasks,
+                lastUpdated: Date.now(),
+            };
 
-        const mergedTasks = Array.from(taskMap.values());
-        const taskIds = new Set(mergedTasks.map(t => t.id));
+            const nextIndex = resolveCurrentIndex(mergedTasks, nextState, preferredTaskId);
+            nextState.currentIndex = clampIndex(nextIndex, mergedTasks.length);
+            nextTaskId = mergedTasks[nextState.currentIndex]?.id ?? null;
 
-        const filteredSolved = new Set(
-            Array.from(prev.solvedTasks).filter(id => taskIds.has(id))
-        );
+            return nextState;
+        });
 
-        const filteredResults = Object.fromEntries(
-            Object.entries(prev.taskResults).filter(([id]) => taskIds.has(id))
-        );
-
-        const filteredCodeCache = Object.fromEntries(
-            Object.entries(prev.codeCache).filter(([id]) => taskIds.has(id))
-        );
-
-        return {
-            ...prev,
-            tasks: mergedTasks,
-            currentIndex: append ? prev.currentIndex : 0,
-            solvedTasks: filteredSolved,
-            taskResults: filteredResults,
-            codeCache: filteredCodeCache,
-            lastUpdated: Date.now(),
-        };
+        setCurrentTaskId(nextTaskId);
+        return addedCount;
     }, []);
 
-    const loadTasks = useCallback(async (append = false): Promise<number> => {
-        if (isLoadingRef.current) {
-            if (append) {
-                pendingAppendRef.current = true;
-            }
-            return 0;
-        }
-
-        isLoadingRef.current = true;
+    const performLoad = useCallback(async (append: boolean): Promise<number> => {
         setIsLoading(true);
-        const generation = ++loadGenerationRef.current;
 
         try {
-            const newTasks = await recommendationService.getRecommendations({
+            const incomingTasks = await recommendationService.getRecommendations({
                 limit: append ? LOAD_MORE_BATCH_SIZE : INITIAL_BATCH_SIZE,
             });
 
-            if (generation !== loadGenerationRef.current) {
+            if (!Array.isArray(incomingTasks)) {
+                console.error('[Queue] Invalid recommendations response:', incomingTasks);
                 return 0;
             }
 
-            let addedCount = 0;
+            const preferredTaskId = append ? currentTaskIdRef.current : null;
+            const addedCount = applyLoadedTasks(incomingTasks, append, preferredTaskId);
 
-            setState(prev => {
-                const knownIds = new Set(prev.tasks.map(task => task.id));
-                const newState = reconcileState(prev, newTasks, append);
-                addedCount = newState.tasks.filter(task => !knownIds.has(task.id)).length;
-                return newState;
-            });
+            if (append && addedCount === 0 && incomingTasks.length > 0) {
+                applyLoadedTasks(incomingTasks, false, null);
+                return incomingTasks.length;
+            }
 
-            return addedCount;
+            return incomingTasks.length;
         } catch (error) {
             console.error('[Queue] Failed to load:', error);
             return 0;
         } finally {
-            isLoadingRef.current = false;
             setIsLoading(false);
-
-            if (pendingAppendRef.current) {
-                pendingAppendRef.current = false;
-                void loadTasks(true);
-            }
         }
-    }, [reconcileState]);
+    }, [applyLoadedTasks]);
+
+    const enqueueLoad = useCallback((append: boolean): Promise<number> => {
+        const loadPromise = loadChainRef.current
+            .catch(() => 0)
+            .then(() => performLoad(append));
+
+        loadChainRef.current = loadPromise.then(() => 0);
+        return loadPromise;
+    }, [performLoad]);
+
+    const ensureMoreTasks = useCallback(async (): Promise<boolean> => {
+        const snapshot = stateRef.current;
+        const currentIndex = clampIndex(snapshot.currentIndex, snapshot.tasks.length);
+        const remaining = snapshot.tasks.length - 1 - currentIndex;
+
+        if (remaining > 0) {
+            return true;
+        }
+
+        const added = await enqueueLoad(true);
+        if (added > 0) {
+            return true;
+        }
+
+        const replaced = await enqueueLoad(false);
+        return replaced > 0;
+    }, [enqueueLoad]);
+
+    const moveToNextTask = useCallback(() => {
+        let nextTaskId: string | null = null;
+
+        setState(prev => {
+            if (prev.tasks.length === 0) {
+                return prev;
+            }
+
+            const currentIndex = clampIndex(prev.currentIndex, prev.tasks.length);
+            let nextIndex = currentIndex + 1;
+
+            while (nextIndex < prev.tasks.length && isTaskCompleted(prev.tasks[nextIndex].id, prev)) {
+                nextIndex += 1;
+            }
+
+            if (nextIndex >= prev.tasks.length) {
+                const fallbackIndex = Math.max(prev.tasks.length - 1, 0);
+                nextTaskId = prev.tasks[fallbackIndex]?.id ?? null;
+                return {
+                    ...prev,
+                    currentIndex: fallbackIndex,
+                };
+            }
+
+            nextTaskId = prev.tasks[nextIndex]?.id ?? null;
+            return {
+                ...prev,
+                currentIndex: nextIndex,
+            };
+        });
+
+        setCurrentTaskId(nextTaskId);
+    }, []);
 
     const handleEndOfQueue = useCallback(async () => {
         const snapshot = stateRef.current;
 
         if (isQueueCompleted(snapshot)) {
-            setState({
+            setState(prev => ({
                 ...getInitialState(),
-                stats: snapshot.stats,
-            });
-            await loadTasks(false);
+                stats: prev.stats,
+                codeCache: prev.codeCache,
+                taskResults: prev.taskResults,
+                solvedTasks: prev.solvedTasks,
+            }));
+            setCurrentTaskId(null);
+            await enqueueLoad(false);
             return;
         }
 
-        const added = await loadTasks(true);
-        if (added > 0) {
-            setState(prev => ({
-                ...prev,
-                currentIndex: prev.currentIndex + 1,
-            }));
+        const hasMore = await ensureMoreTasks();
+        if (hasMore) {
+            moveToNextTask();
         }
-    }, [loadTasks]);
+    }, [enqueueLoad, ensureMoreTasks, moveToNextTask]);
 
     const goToNext = useCallback(() => {
         const snapshot = stateRef.current;
+        const currentIndex = clampIndex(snapshot.currentIndex, snapshot.tasks.length);
+        const hasNextInBuffer = currentIndex < snapshot.tasks.length - 1;
 
-        if (snapshot.currentIndex < snapshot.tasks.length - 1) {
-            setState(prev => ({
-                ...prev,
-                currentIndex: prev.currentIndex + 1,
-            }));
+        if (hasNextInBuffer) {
+            moveToNextTask();
             return;
         }
 
         void handleEndOfQueue();
-    }, [handleEndOfQueue]);
+    }, [handleEndOfQueue, moveToNextTask]);
 
     const goToPrevious = useCallback(() => {
-        setState(prev => ({
-            ...prev,
-            currentIndex: Math.max(prev.currentIndex - 1, 0),
-        }));
+        let prevTaskId: string | null = null;
+
+        setState(prev => {
+            if (prev.tasks.length === 0) {
+                return prev;
+            }
+
+            const currentIndex = clampIndex(prev.currentIndex, prev.tasks.length);
+            const prevIndex = Math.max(currentIndex - 1, 0);
+            prevTaskId = prev.tasks[prevIndex]?.id ?? null;
+
+            return {
+                ...prev,
+                currentIndex: prevIndex,
+            };
+        });
+
+        setCurrentTaskId(prevTaskId);
     }, []);
 
     const updateStats = useCallback((status: SolutionStatus) => {
@@ -283,33 +425,54 @@ export function useQueueState(): UseQueueReturn {
             return;
         }
         initialLoadDoneRef.current = true;
-
-        const snapshot = stateRef.current;
-
-        if (snapshot.tasks.length === 0) {
-            void loadTasks(false);
-            return;
-        }
-
-        if (isQueueCompleted(snapshot)) {
-            void loadTasks(true);
-        }
-    }, [loadTasks]);
+        void enqueueLoad(false);
+    }, [enqueueLoad]);
 
     useEffect(() => {
-        if (state.tasks.length === 0 || isLoadingRef.current) {
+        if (state.tasks.length === 0 || isLoading) {
             return;
         }
 
-        const remaining = state.tasks.length - 1 - state.currentIndex;
+        const currentIndex = clampIndex(state.currentIndex, state.tasks.length);
+        const remaining = state.tasks.length - 1 - currentIndex;
         if (remaining > PREFETCH_REMAINING) {
             return;
         }
 
-        void loadTasks(true);
-    }, [state.currentIndex, state.tasks.length, loadTasks]);
+        void enqueueLoad(true);
+    }, [state.currentIndex, state.tasks.length, isLoading, enqueueLoad]);
 
-    const currentTask = state.tasks[state.currentIndex] || null;
+    useEffect(() => {
+        if (state.tasks.length === 0) {
+            return;
+        }
+
+        const index = clampIndex(state.currentIndex, state.tasks.length);
+        if (state.tasks[index]) {
+            return;
+        }
+
+        let nextTaskId: string | null = null;
+
+        setState(prev => {
+            const nextIndex = resolveCurrentIndex(
+                prev.tasks,
+                prev,
+                currentTaskIdRef.current
+            );
+            nextTaskId = prev.tasks[nextIndex]?.id ?? null;
+
+            return {
+                ...prev,
+                currentIndex: clampIndex(nextIndex, prev.tasks.length),
+            };
+        });
+
+        setCurrentTaskId(nextTaskId);
+    }, [state.tasks, state.currentIndex]);
+
+    const currentIndex = clampIndex(state.currentIndex, state.tasks.length);
+    const currentTask = state.tasks[currentIndex] ?? null;
     const isCurrentTaskCompleted = currentTask
         ? isTaskCompleted(currentTask.id, state)
         : false;
@@ -379,11 +542,13 @@ export function useQueueState(): UseQueueReturn {
     const taskResults = currentTask ? (state.taskResults[currentTask.id] || []) : [];
     const isTaskSolved = currentTask ? state.solvedTasks.has(currentTask.id) : false;
     const canSubmit = currentTask ? !isCurrentTaskCompleted : false;
+    const isQueueEmpty = state.tasks.length === 0 && !isLoading;
+    const isResolvingTask = state.tasks.length > 0 && !currentTask;
 
     return {
         tasks: state.tasks,
         currentTask,
-        currentIndex: state.currentIndex,
+        currentIndex,
         totalLoaded: state.tasks.length,
 
         stats: state.stats,
@@ -391,24 +556,24 @@ export function useQueueState(): UseQueueReturn {
 
         goToNext,
         goToPrevious,
-        canGoNext: state.currentIndex < state.tasks.length - 1,
-        canGoPrevious: state.currentIndex > 0,
+        canGoNext: currentIndex < state.tasks.length - 1,
+        canGoPrevious: currentIndex > 0,
 
         selectedLanguage,
         setSelectedLanguage,
         code,
         setCode: handleCodeChange,
 
-        isLoading,
+        isLoading: isLoading || isResolvingTask,
         loadMore: async () => {
-            await loadTasks(true);
+            await enqueueLoad(true);
         },
         refresh: async () => {
-            await loadTasks(false);
+            await enqueueLoad(false);
         },
 
-        isQueueEmpty: state.tasks.length === 0,
-        isLastTask: state.currentIndex === state.tasks.length - 1,
+        isQueueEmpty,
+        isLastTask: currentIndex === state.tasks.length - 1,
 
         taskResults,
         isTaskSolved,

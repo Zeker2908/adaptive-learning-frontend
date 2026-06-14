@@ -77,7 +77,7 @@ export default function InfiniteQueuePage() {
         }
     }, [currentTask, isCurrentTaskCompleted]);
 
-    if (isLoading && isQueueEmpty) {
+    if (isLoading && !currentTask) {
         return (
             <RootLayout>
                 <div className="flex items-center justify-center min-h-[60vh]">
