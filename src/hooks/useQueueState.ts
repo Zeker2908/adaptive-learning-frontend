@@ -361,8 +361,12 @@ export function useQueueState(): UseQueueReturn {
         setCode: handleCodeChange,
 
         isLoading,
-        loadMore: () => loadTasks(true),
-        refresh: () => loadTasks(false),
+        loadMore: async () => {
+            await loadTasks(true);
+        },
+        refresh: async () => {
+            await loadTasks(false);
+        },
 
         isQueueEmpty: state.tasks.length === 0,
         isLastTask: state.currentIndex === state.tasks.length - 1,
